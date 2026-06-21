@@ -12,4 +12,10 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  vite: {
+    preview: {
+      port: process.env.PORT ? parseInt(process.env.PORT) : 8080,
+      host: "0.0.0.0",
+    },
+  },
 });
