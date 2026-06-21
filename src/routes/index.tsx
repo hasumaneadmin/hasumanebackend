@@ -366,7 +366,7 @@ function Index() {
                 Tamil Nadu — 635118
               </address>
               <div className="mt-4 flex gap-4 text-[13px]">
-                <a href="https://www.instagram.com/p/DZzGqaITfJJ/?igsh=MW1qeHc1a3dvYmg0dw==" target="_blank" rel="noopener noreferrer" className="hover:opacity-80">Instagram</a>
+                <a href="https://www.instagram.com/hasumane_organics?igsh=cWo4YzJ2eDB0bXow" target="_blank" rel="noopener noreferrer" className="hover:opacity-80">Instagram</a>
                 <a href="https://www.linkedin.com/posts/hasumane-organics-70a2ba418_hasumaneorganics-organicfarming-organicdairy-share-7473991161263853569-Ijjx/?utm_source=share&utm_medium=member_ios&rcm=ACoAAGoemnoBVfwW-ngen0It1oUHKdzL-aVUvfE" target="_blank" rel="noopener noreferrer" className="hover:opacity-80">LinkedIn</a>
                 <a href="https://wa.me/919344259815" target="_blank" rel="noopener noreferrer" className="hover:opacity-80">WhatsApp</a>
               </div>
