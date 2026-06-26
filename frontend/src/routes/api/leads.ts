@@ -38,6 +38,7 @@ export const Route = createFileRoute("/api/leads")({
           const parsed = leadSubmissionSchema.safeParse(payload);
 
           if (!parsed.success) {
+            console.error("Frontend lead validation failed:", parsed.error.flatten().fieldErrors);
             return json(
               {
                 success: false,

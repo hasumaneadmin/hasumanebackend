@@ -1,43 +1,85 @@
+import { appendFile, mkdir } from "node:fs/promises";
+import path from "node:path";
 import type { LeadSubmission } from "./leads";
 
-type LeadRecord = LeadSubmission & {
-  id: string;
-  submittedAt: string;
-  userAgent: string | null;
-};
+function maskPhone(value: string) {
+  return value.replace(/\d(?=\d{4})/g, "*");
+}
 
-const MAX_RUNTIME_LEADS = 100;
-const runtimeLeads: LeadRecord[] = [];
+function createLocalLeadRecord(data: LeadSubmission, request: Request) {
+  return {
+    id: crypto.randomUUID(),
+    submittedAt: new Date().toISOString(),
+    ...data,
+    userAgent: request.headers.get("user-agent"),
+    referrer: request.headers.get("referer"),
+    backendForwarded: false,
+  };
+}
 
-function createLeadId() {
-  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-    return crypto.randomUUID();
-  }
+async function saveLeadLocally(record: ReturnType<typeof createLocalLeadRecord>) {
+  const dataDir = path.resolve(process.cwd(), ".data");
+  const filePath = path.join(dataDir, "public-leads.ndjson");
 
-  return `lead_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  await mkdir(dataDir, { recursive: true });
+  await appendFile(filePath, `${JSON.stringify(record)}\n`, "utf8");
+
+  return record;
 }
 
 export async function saveLeadSubmission(data: LeadSubmission, request: Request) {
-  const record: LeadRecord = {
-    ...data,
-    id: createLeadId(),
-    submittedAt: new Date().toISOString(),
-    userAgent: request.headers.get("user-agent"),
+  const logPayload = {
+    name: data.name,
+    phone: maskPhone(data.phone),
+    area: data.area,
   };
 
-  runtimeLeads.unshift(record);
-  runtimeLeads.splice(MAX_RUNTIME_LEADS);
+  console.info("New HasuMane lead submission", logPayload);
 
-  console.info("New HasuMane lead submission", {
-    id: record.id,
-    name: record.name,
-    phone: record.phone,
-    area: record.area,
-    submittedAt: record.submittedAt,
-  });
+  const backendUrl = (process.env.BACKEND_API_URL || "http://localhost:5000").replace(/\/$/, "");
+  try {
+    const response = await fetch(`${backendUrl}/api/v1/leads`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: data.name,
+        phone: data.phone,
+        area: data.area,
+        product: data.product,
+        requestType: data.requestType,
+        quantity: data.quantity,
+        plan: data.plan,
+        notes: data.notes,
+        source: data.source || `website-${data.requestType}`,
+        userAgent: request.headers.get("user-agent"),
+        referrer: request.headers.get("referer"),
+      }),
+    });
 
-  return {
-    id: record.id,
-    submittedAt: record.submittedAt,
-  };
+    if (!response.ok) {
+      const message = await response.text().catch(() => "");
+      throw new Error(message || `Backend returned status ${response.status}.`);
+    }
+
+    const result = (await response.json().catch(() => null)) as {
+      id?: string;
+      submittedAt?: string;
+      data?: { id?: string; submittedAt?: string };
+    } | null;
+
+    const lead = result?.data ?? result ?? {};
+
+    return {
+      id: lead.id ?? "",
+      submittedAt: lead.submittedAt ?? new Date().toISOString(),
+      backendForwarded: true,
+    };
+  } catch (error) {
+    console.warn("Backend unavailable, storing lead locally:", error);
+    const localLead = await saveLeadLocally(createLocalLeadRecord(data, request));
+
+    return localLead;
+  }
 }

@@ -4,11 +4,12 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useLocation,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, useState, type ReactNode } from "react";
-import Lenis from "lenis";
+import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -111,7 +112,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500;1,600&family=Inter:wght@100;200;300;400;500;600&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&display=swap",
       },
     ],
   }),
@@ -137,94 +138,64 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  const [showPreloader, setShowPreloader] = useState(true);
-  const [fadeOutPreloader, setFadeOutPreloader] = useState(false);
-  const [videoReady, setVideoReady] = useState(false);
+  const location = useLocation();
+  const isLoading = useRouterState({ select: (s) => s.status === "pending" });
 
   useEffect(() => {
-    // Initialize Lenis smooth scroll
-    const lenis = new Lenis({
-      duration: 1.2,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      smoothWheel: true,
-    });
-
-    function raf(time: number) {
-      lenis.raf(time);
-      requestAnimationFrame(raf);
+    if (location.pathname !== "/") {
+      return;
     }
 
-    requestAnimationFrame(raf);
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let cleanupSmoothScroll: (() => void) | undefined;
+    let cancelled = false;
 
-    const handleVideoReady = () => {
-      setVideoReady(true);
-    };
-    window.addEventListener("hasumane-video-ready", handleVideoReady);
+    async function enableSmoothScroll() {
+      if (prefersReducedMotion) return;
 
-    // Safety fallback: fade out anyway after 2.5s if event isn't received (e.g. slow network / other page)
-    const safetyTimeout = setTimeout(() => {
-      setVideoReady(true);
-    }, 2500);
+      const { default: Lenis } = await import("lenis");
+      if (cancelled) return;
+
+      const lenis = new Lenis({
+        duration: 1.05,
+        easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        smoothWheel: true,
+      });
+
+      let animationFrame = 0;
+
+      function raf(time: number) {
+        lenis.raf(time);
+        animationFrame = requestAnimationFrame(raf);
+      }
+
+      animationFrame = requestAnimationFrame(raf);
+      cleanupSmoothScroll = () => {
+        if (animationFrame) cancelAnimationFrame(animationFrame);
+        lenis.destroy();
+      };
+    }
+
+    void enableSmoothScroll();
 
     return () => {
-      lenis.destroy();
-      window.removeEventListener("hasumane-video-ready", handleVideoReady);
-      clearTimeout(safetyTimeout);
+      cancelled = true;
+      cleanupSmoothScroll?.();
     };
-  }, []);
-
-  useEffect(() => {
-    if (!videoReady) return;
-
-    const fadeTimeout = setTimeout(() => {
-      setFadeOutPreloader(true);
-    }, 100);
-
-    const hideTimeout = setTimeout(() => {
-      setShowPreloader(false);
-    }, 500);
-
-    return () => {
-      clearTimeout(fadeTimeout);
-      clearTimeout(hideTimeout);
-    };
-  }, [videoReady]);
+  }, [location.pathname]);
 
   return (
     <QueryClientProvider client={queryClient}>
-      {showPreloader && (
-        <div className={`preloader-screen ${fadeOutPreloader ? "fade-out" : ""}`}>
-          <div className="flex flex-col items-center gap-20 select-none animate-fade-in duration-700">
-            <div className="relative flex items-center justify-center h-80 w-80 rounded-full bg-vivid-lime/10 border border-vivid-lime/20 text-vivid-lime shadow-xl">
-              <svg
-                viewBox="0 0 24 24"
-                className="h-40 w-40 animate-pulse"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.6"
-              >
-                <path d="M4 20c0-9 7-16 16-16-0.5 9-7.5 16-16 16Z" />
-                <path d="M4 20c4-4 8-7 14-12" />
-              </svg>
-              <div
-                className="absolute inset-0 rounded-full border border-vivid-lime animate-spin"
-                style={{
-                  borderRightColor: "transparent",
-                  borderBottomColor: "transparent",
-                  borderLeftColor: "transparent",
-                  animationDuration: "1s",
-                }}
-              />
-            </div>
-            <div className="text-center">
-              <h1 className="font-reckless text-[36px] text-pure-white leading-tight tracking-tight">
-                HasuMane
-              </h1>
-              <p className="font-sans text-[12px] text-vivid-lime/75 uppercase tracking-[0.2em] mt-5">
-                Halliyinda Nimma Manege
-              </p>
-            </div>
-          </div>
+      {isLoading && (
+        <div className="fixed left-0 right-0 top-0 z-[9999] h-[3px] w-full bg-forest-ink/20">
+          <div
+            className="h-full bg-vivid-lime"
+            style={{
+              width: "100%",
+              transformOrigin: "left",
+              animation: "loading-bar 1.5s infinite ease-in-out",
+            }}
+          />
         </div>
       )}
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}

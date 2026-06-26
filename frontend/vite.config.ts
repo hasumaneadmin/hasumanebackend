@@ -13,6 +13,19 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes("node_modules/recharts")) return "charts";
+            if (id.includes("node_modules/react") || id.includes("node_modules/@tanstack")) {
+              return "framework";
+            }
+            if (id.includes("node_modules")) return "vendor";
+          },
+        },
+      },
+    },
     server: {
       allowedHosts: true,
     },

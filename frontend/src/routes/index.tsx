@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useState, useRef, type FormEvent } from "react";
 import heroCattle from "@/assets/hero-cattle.jpeg.asset.json";
 import grazingCow from "@/assets/grazing-cow.jpeg.asset.json";
 import brownCow from "@/assets/brown-cow.jpeg.asset.json";
@@ -30,6 +30,10 @@ import {
   Stethoscope,
   Truck,
   Wheat,
+  User,
+  Phone,
+  CalendarDays,
+  MessageSquare,
   type LucideIcon,
 } from "lucide-react";
 
@@ -49,13 +53,21 @@ export const Route = createFileRoute("/")({
           "A farmer entrepreneurship initiative. Chemical-free dairy, restorative agriculture, fresh to your door.",
       },
       { property: "og:image", content: heroCattle.url },
+      { name: "twitter:title", content: "HasuMane - The Cow's Home" },
+      {
+        name: "twitter:description",
+        content:
+          "Chemical-free dairy and farmer entrepreneurship from Krishnagiri to Bengaluru homes.",
+      },
+      { name: "twitter:image", content: heroCattle.url },
     ],
+    links: [{ rel: "canonical", href: "https://hasumane.com/" }],
   }),
   component: Index,
 });
 
 const HERO_VIDEO_SRC = "/hasumane-video.mp4";
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/$/, "");
 
 const MARQUEE = [
   "Now Delivering Fresh, Daily, Across Bengaluru",
@@ -119,36 +131,159 @@ const sustainabilityCards = [
   },
 ];
 
-const products = [
+type ApiProduct = {
+  id: string;
+  code: string;
+  name: string;
+  productType: string;
+  unit: string;
+  defaultQuantity: number;
+  defaultSchedule: string;
+  description?: string | null;
+  isActive?: boolean;
+  active?: boolean;
+};
+
+type ApiProductResponse = {
+  success?: boolean;
+  products?: ApiProduct[];
+  data?: ApiProduct[] | { products?: ApiProduct[]; data?: ApiProduct[] };
+};
+
+type SiteProduct = {
+  code: string;
+  name: string;
+  value: string;
+  bgColor: string;
+  icon: LucideIcon;
+  unit: ProductOrderUnit;
+  desc: string;
+};
+
+type ProductOrderUnit = "litre" | "gram" | "kg";
+
+const productCardTones = ["bg-sky-card", "bg-peach-card", "bg-sage-card", "bg-ash-gray"];
+
+function normalizeProductOrderUnit(product: Pick<ApiProduct, "name" | "productType" | "unit">) {
+  const label = `${product.name} ${product.productType}`.toLowerCase();
+  const unit = (product.unit || "").toLowerCase();
+
+  if (label.includes("milk") || label.includes("curd")) return "litre" as const;
+  if (label.includes("ghee")) return "kg" as const;
+  if (
+    label.includes("butter") ||
+    label.includes("paneer") ||
+    label.includes("panner") ||
+    label.includes("cheese")
+  ) {
+    return "gram" as const;
+  }
+  if (["litre", "liter", "l", "lt"].includes(unit)) return "litre" as const;
+  if (["kg", "kilogram", "kilograms"].includes(unit)) return "kg" as const;
+  if (["g", "gram", "grams"].includes(unit)) return "gram" as const;
+  return "kg" as const;
+}
+
+function formatOrderUnitLabel(unit: ProductOrderUnit) {
+  if (unit === "litre") return "Litre";
+  if (unit === "gram") return "Gram";
+  return "Kg";
+}
+
+const fallbackProducts: SiteProduct[] = [
   {
     code: "MK-01",
     name: "Milk",
+    value: "milk",
     bgColor: "bg-sky-card",
     icon: Milk,
+    unit: "litre",
     desc: "Free-range, antibiotic-free, hormone-free - chilled at source.",
   },
   {
     code: "CD-02",
     name: "Curd",
+    value: "curd",
     bgColor: "bg-peach-card",
     icon: Droplets,
+    unit: "litre",
     desc: "Traditional set curd, made fresh from our own pure milk.",
   },
   {
     code: "BT-03",
     name: "Butter",
+    value: "butter",
     bgColor: "bg-sage-card",
     icon: PackageCheck,
+    unit: "gram",
     desc: "Churned the traditional way. No additives, ever.",
   },
   {
-    code: "GH-04",
+    code: "GH-05",
     name: "Ghee",
+    value: "ghee",
     bgColor: "bg-ash-gray",
     icon: Flame,
+    unit: "kg",
     desc: "Slow-cooked in small batches for purity and aroma.",
   },
+  {
+    code: "PN-04",
+    name: "Paneer",
+    value: "paneer",
+    bgColor: "bg-ash-gray",
+    icon: PackageCheck,
+    unit: "gram",
+    desc: "Fresh paneer blocks for cooking, grilling, and rich meals.",
+  },
+  {
+    code: "CH-06",
+    name: "Cheese",
+    value: "cheese",
+    bgColor: "bg-sky-card",
+    icon: PackageCheck,
+    unit: "gram",
+    desc: "Soft fresh cheese for slices, cooking, and everyday use.",
+  },
 ];
+
+function getProductIcon(product: Pick<ApiProduct, "name" | "productType">): LucideIcon {
+  const label = `${product.name} ${product.productType}`.toLowerCase();
+
+  if (label.includes("milk")) return Milk;
+  if (label.includes("curd") || label.includes("yogurt")) return Droplets;
+  if (label.includes("ghee")) return Flame;
+  if (label.includes("butter")) return PackageCheck;
+  if (label.includes("paneer") || label.includes("panner")) return PackageCheck;
+  if (label.includes("cheese")) return PackageCheck;
+
+  return PackageCheck;
+}
+
+function mapProductToSiteProduct(product: ApiProduct, index: number): SiteProduct {
+  const unit = normalizeProductOrderUnit(product);
+  return {
+    code: product.code,
+    name: product.name,
+    value: product.productType || product.code || product.name,
+    bgColor: productCardTones[index % productCardTones.length],
+    icon: getProductIcon(product),
+    unit,
+    desc:
+      product.description ||
+      `${product.defaultQuantity || 1} ${formatOrderUnitLabel(unit).toLowerCase()} available on ${product.defaultSchedule || "custom"} plans.`,
+  };
+}
+
+function getApiProducts(result: ApiProductResponse) {
+  if (Array.isArray(result.products)) return result.products;
+  if (Array.isArray(result.data)) return result.data;
+  if (result.data && !Array.isArray(result.data)) {
+    if (Array.isArray(result.data.products)) return result.data.products;
+    if (Array.isArray(result.data.data)) return result.data.data;
+  }
+  return [];
+}
 
 function IconBadge({
   icon: Icon,
@@ -192,31 +327,131 @@ function WhatsAppIcon({
 }
 
 function Index() {
-  const videoRef = useRef<HTMLVideoElement>(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const [leadStatus, setLeadStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [leadMessage, setLeadMessage] = useState("");
+  const [siteProducts, setSiteProducts] = useState<SiteProduct[]>(fallbackProducts);
+  const [selectedProduct, setSelectedProduct] = useState(fallbackProducts[0]?.value ?? "milk");
+  const [requestType, setRequestType] = useState<"subscription" | "order">("subscription");
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const productOptionsKey = siteProducts.map((product) => product.value).join("|");
+  const selectedProductUnit =
+    siteProducts.find((product) => product.value === selectedProduct)?.unit ?? "litre";
 
   useEffect(() => {
-    const video = videoRef.current;
+    if (videoRef.current) {
+      videoRef.current.muted = true;
+      videoRef.current.play().catch((err) => {
+        console.warn("Autoplay failed or was prevented:", err);
+      });
+    }
+  }, []);
 
-    const handlePlaying = () => {
-      window.dispatchEvent(new CustomEvent("hasumane-video-ready"));
+  // Handle hash scrolling on page load (e.g. direct access to #order)
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash && hash.length > 1) {
+      const timer = setTimeout(() => {
+        const id = hash.substring(1);
+        const element = document.getElementById(id);
+        if (element) {
+          const prefersReducedMotion = window.matchMedia(
+            "(prefers-reduced-motion: reduce)",
+          ).matches;
+          element.scrollIntoView({
+            behavior: prefersReducedMotion ? "auto" : "smooth",
+            block: "start",
+          });
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  // Intercept all hash link clicks to scroll smoothly
+  useEffect(() => {
+    const handleHashClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const anchor = target.closest("a");
+      if (!anchor) return;
+      const href = anchor.getAttribute("href");
+      if (href && href.startsWith("#") && href.length > 1) {
+        e.preventDefault();
+        const id = href.substring(1);
+        const element = document.getElementById(id);
+        if (element) {
+          const prefersReducedMotion = window.matchMedia(
+            "(prefers-reduced-motion: reduce)",
+          ).matches;
+          element.scrollIntoView({
+            behavior: prefersReducedMotion ? "auto" : "smooth",
+            block: "start",
+          });
+          // Update URL hash without causing a page jump
+          window.history.pushState(null, "", href);
+        }
+      }
     };
 
-    if (video) {
-      video.muted = true;
-      video.addEventListener("playing", handlePlaying);
-      video.play().catch((err) => {
-        console.warn("Autoplay blocked or failed:", err);
-      });
+    document.addEventListener("click", handleHashClick, { capture: true });
+    return () => document.removeEventListener("click", handleHashClick, { capture: true });
+  }, []);
 
-      // safety fallback: if already playing
-      if (video.currentTime > 0 && !video.paused) {
-        handlePlaying();
+  useEffect(() => {
+    let isMounted = true;
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 2500);
+
+    async function loadProducts() {
+      try {
+        const response = await fetch(`${API_URL}/api/v1/products`, {
+          cache: "no-store",
+          signal: controller.signal,
+        });
+        const result = (await response.json()) as ApiProductResponse;
+        const products = getApiProducts(result);
+
+        if (!response.ok || result.success === false || products.length === 0) {
+          throw new Error("Product catalog unavailable.");
+        }
+
+        const activeProducts = products
+          .filter((product) => product.isActive ?? product.active ?? true)
+          .map(mapProductToSiteProduct);
+
+        if (isMounted && activeProducts.length > 0) {
+          setSiteProducts(activeProducts);
+        }
+      } catch (error) {
+        console.warn("Using fallback product catalog:", error);
+      } finally {
+        window.clearTimeout(timeoutId);
       }
     }
 
+    loadProducts();
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+      window.clearTimeout(timeoutId);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!siteProducts.some((product) => product.value === selectedProduct)) {
+      setSelectedProduct(siteProducts[0]?.value ?? "milk");
+    }
+  }, [selectedProduct, siteProducts]);
+
+  function handleProductSelect(productValue: string) {
+    setSelectedProduct(productValue);
+    const orderSection = document.getElementById("order");
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    orderSection?.scrollIntoView({ behavior: prefersReducedMotion ? "auto" : "smooth" });
+  }
+
+  useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
     handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -239,9 +474,6 @@ function Index() {
     return () => {
       window.removeEventListener("scroll", handleScroll);
       elements.forEach((el) => observer.unobserve(el));
-      if (video) {
-        video.removeEventListener("playing", handlePlaying);
-      }
     };
   }, []);
 
@@ -255,7 +487,7 @@ function Index() {
     setLeadMessage("");
 
     try {
-      const response = await fetch(`${API_URL}/api/subscriptions/public`, {
+      const response = await fetch("/api/leads", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -264,7 +496,12 @@ function Index() {
           name: formData.get("name"),
           phone: formData.get("phone"),
           area: formData.get("area"),
-          notes: formData.get("notes"),
+          product: formData.get("product"),
+          requestType: formData.get("requestType"),
+          quantity: formData.get("quantity"),
+          plan: formData.get("plan") || "daily",
+          source: `website-${String(formData.get("requestType") || "subscription")}`,
+          notes: formData.get("notes") || "",
         }),
       });
       const result = (await response.json()) as {
@@ -278,8 +515,24 @@ function Index() {
       }
 
       form.reset();
+      setSelectedProduct(siteProducts[0]?.value ?? "milk");
+      setRequestType("subscription");
       setLeadStatus("success");
       setLeadMessage(result.message ?? "Thanks. We received your request.");
+
+      // Direct WhatsApp redirect with pre-filled details
+      const name = formData.get("name") as string;
+      const phone = formData.get("phone") as string;
+      const area = formData.get("area") as string;
+      const product = formData.get("product") as string;
+      const requestTypeValue = (formData.get("requestType") as string) || "subscription";
+      const quantity = formData.get("quantity") as string;
+      const plan = formData.get("plan") as string;
+      const notes = (formData.get("notes") as string) || "None";
+      const requestLabel = requestTypeValue === "order" ? "one-time order" : "subscription";
+      const text = `Hi HasuMane, I'm ${name}. I'd like to request details for a ${requestLabel}.\n\n*My Details*:\n- Phone: ${phone}\n- Area: ${area}\n- Product: ${product}\n- Quantity: ${quantity}\n- Plan: ${plan}\n- Notes: ${notes}`;// @ts-ignore
+      const whatsappUrl = `https://wa.me/919344259815?text=${encodeURIComponent(text)}`;
+      window.open(whatsappUrl, "_blank");
     } catch (error) {
       setLeadStatus("error");
       setLeadMessage(
@@ -293,7 +546,7 @@ function Index() {
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-bone text-charcoal font-inter selection:bg-vivid-lime selection:text-forest-ink">
       <div className="pointer-events-none fixed left-0 right-0 top-[48px] z-0 h-[calc(100svh-48px)] bg-pure-white p-[10px]">
-        <div className="relative h-full w-full overflow-hidden rounded-[18px] bg-black">
+        <div className="relative h-full w-full overflow-hidden rounded-[18px] bg-black bg-cover bg-center">
           <video
             ref={videoRef}
             autoPlay
@@ -303,7 +556,7 @@ function Index() {
             preload="auto"
             disablePictureInPicture
             aria-hidden="true"
-            className="absolute inset-0 h-full w-full object-cover object-center"
+            className="hero-video absolute inset-0 h-full w-full object-cover object-center bg-black"
           >
             <source src={HERO_VIDEO_SRC} type="video/mp4" />
           </video>
@@ -508,6 +761,7 @@ function Index() {
                   alt="Cow grazing at a partner farm"
                   className="h-[280px] w-full object-cover"
                   loading="lazy"
+                  decoding="async"
                 />
               </div>
             </div>
@@ -560,19 +814,23 @@ function Index() {
         <section id="products" className="scroll-fade-in mx-auto max-w-[1200px] px-24 pb-[80px]">
           <div className="mb-40 grid items-end gap-30 border-b border-moss pb-30 md:grid-cols-12">
             <h2 className="text-heading font-light text-charcoal md:col-span-7">
-              Four Products.
+              Fresh Products.
               <br />
               No Compromises.
             </h2>
             <p className="max-w-[48ch] text-[16px] leading-relaxed text-graphite md:col-span-5">
-              We keep our line focused: milk, curd, butter, and ghee, made the traditional way from
-              our own partner farms.
+              Our catalog updates from the CRM, so every active product your team adds is available
+              for customers to request.
             </p>
           </div>
 
           <div className="grid gap-24 md:grid-cols-2 lg:grid-cols-4">
-            {products.map((product) => (
-              <ProductCard key={product.name} {...product} />
+            {siteProducts.map((product) => (
+              <ProductCard
+                key={product.value}
+                {...product}
+                onSelect={() => handleProductSelect(product.value)}
+              />
             ))}
           </div>
         </section>
@@ -619,6 +877,7 @@ function Index() {
                 alt="Healthy cow at HasuMane partner farm"
                 className="h-[320px] w-full object-cover"
                 loading="lazy"
+                decoding="async"
               />
             </div>
           </div>
@@ -658,6 +917,7 @@ function Index() {
               alt="Young calf at a partner farm"
               className="h-[320px] w-full object-cover"
               loading="lazy"
+              decoding="async"
             />
           </div>
           <blockquote className="mx-auto mt-30 max-w-[32ch] font-reckless text-heading-sm font-light italic text-charcoal">
@@ -668,17 +928,17 @@ function Index() {
           </p>
         </section>
 
-        <section id="order" className="scroll-fade-in border-t border-moss bg-pure-white py-[90px]">
+        <section id="order" className="scroll-fade-in border-t border-moss bg-bone/30 py-[90px]">
           <div className="mx-auto max-w-[650px] px-24 text-center">
             <span className="text-caption font-mono uppercase tracking-[0.2em] text-forest-ink">
-              Bengaluru Delivery Subscriptions
+              Bengaluru Orders and Subscriptions
             </span>
             <h2 className="mt-12 mb-24 font-reckless text-heading font-light text-charcoal">
-              Get In Touch With Us
+              Choose How You Want To Order
             </h2>
             <p className="mb-40 text-body-sm leading-relaxed text-graphite max-w-[50ch] mx-auto">
-              We deliver fresh, chemical-free milk, curd, butter, and ghee daily across Bengaluru.
-              Connect with us directly on WhatsApp, follow us on Instagram, or send a request below.
+              We deliver fresh, chemical-free products daily across Bengaluru. Send a one-time order
+              request or start a recurring subscription below.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-16 mt-20">
@@ -705,64 +965,313 @@ function Index() {
                 Follow on Instagram
               </a>
             </div>
+          </div>
 
-            <form
-              onSubmit={handleLeadSubmit}
-              className="mx-auto mt-40 flex max-w-[540px] flex-col gap-15 text-left"
-            >
-              <input
-                name="name"
-                type="text"
-                placeholder="Your Name"
-                required
-                autoComplete="name"
-                disabled={leadStatus === "submitting"}
-                className="w-full rounded-inputs border border-moss bg-bone px-24 py-15 text-body text-charcoal transition placeholder:text-pewter/60 focus:border-forest-ink focus:outline-none disabled:cursor-wait disabled:opacity-70"
-              />
-              <input
-                name="phone"
-                type="tel"
-                placeholder="Phone Number"
-                required
-                autoComplete="tel"
-                disabled={leadStatus === "submitting"}
-                className="w-full rounded-inputs border border-moss bg-bone px-24 py-15 text-body text-charcoal transition placeholder:text-pewter/60 focus:border-forest-ink focus:outline-none disabled:cursor-wait disabled:opacity-70"
-              />
-              <input
-                name="area"
-                type="text"
-                placeholder="Your Area / Pincode in Bengaluru"
-                required
-                autoComplete="address-level2"
-                disabled={leadStatus === "submitting"}
-                className="w-full rounded-inputs border border-moss bg-bone px-24 py-15 text-body text-charcoal transition placeholder:text-pewter/60 focus:border-forest-ink focus:outline-none disabled:cursor-wait disabled:opacity-70"
-              />
-              <textarea
-                name="notes"
-                placeholder="Products or daily quantity (optional)"
-                rows={3}
-                disabled={leadStatus === "submitting"}
-                className="w-full resize-none rounded-inputs border border-moss bg-bone px-24 py-15 text-body text-charcoal transition placeholder:text-pewter/60 focus:border-forest-ink focus:outline-none disabled:cursor-wait disabled:opacity-70"
-              />
-              <button
-                type="submit"
-                disabled={leadStatus === "submitting"}
-                className="inline-flex w-full items-center justify-center rounded-buttons bg-forest-ink px-30 py-15 text-body-sm font-medium uppercase tracking-wider text-pure-white shadow-sm transition-all duration-300 hover:scale-[1.01] hover:bg-forest-ink/90 active:scale-[0.98] disabled:cursor-wait disabled:opacity-70"
+          <div className="mx-auto mt-40 max-w-[1120px] px-24">
+            <div className="rounded-[24px] border border-moss/20 bg-pure-white p-20 shadow-xl sm:p-32 lg:p-36">
+              <h3 className="text-center font-reckless text-[24px] font-medium text-forest-ink">
+                Start Your Fresh Order
+              </h3>
+              <p className="mt-8 text-center text-body-sm text-pewter">
+                Fill in your details below and we will contact you on WhatsApp shortly.
+              </p>
+
+              <form
+                id="order-form"
+                onSubmit={handleLeadSubmit}
+                className="mt-22 grid gap-16 text-left xl:grid-cols-[1fr_1fr] xl:items-start"
               >
-                {leadStatus === "submitting" ? "Sending..." : "Request Details"}
-                <Send className="ml-8 h-[15px] w-[15px]" strokeWidth={1.8} aria-hidden="true" />
-              </button>
-              {leadMessage ? (
-                <p
-                  role={leadStatus === "error" ? "alert" : "status"}
-                  className={`text-center text-body-sm leading-relaxed ${
-                    leadStatus === "success" ? "text-forest-ink" : "text-red-700"
-                  }`}
-                >
-                  {leadMessage}
-                </p>
-              ) : null}
-            </form>
+                <div className="grid gap-16 rounded-[18px] border border-moss/20 bg-bone/25 p-16 lg:p-18">
+                  <div className="mb-4 flex items-center gap-8">
+                    <span className="flex h-28 w-28 items-center justify-center rounded-[8px] bg-forest-ink/10 text-forest-ink">
+                      <User className="h-[14px] w-[14px]" strokeWidth={1.9} />
+                    </span>
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-pewter">
+                      Contact
+                    </span>
+                  </div>
+                  <div className="grid gap-12 md:grid-cols-2">
+                    <div className="relative flex flex-col">
+                      <span className="mb-6 pl-4 text-[12px] font-semibold uppercase tracking-wider text-pewter">
+                        Your Name
+                      </span>
+                      <div className="relative flex items-center">
+                        <User
+                          className="absolute left-20 h-[18px] w-[18px] text-pewter"
+                          strokeWidth={1.8}
+                        />
+                        <input
+                          name="name"
+                          type="text"
+                          aria-label="Your name"
+                          placeholder="e.g. John Doe"
+                          required
+                          autoComplete="name"
+                          disabled={leadStatus === "submitting"}
+                          className="h-[56px] w-full rounded-[14px] border border-moss/45 bg-pure-white pl-50 pr-24 text-body text-charcoal transition-all placeholder:text-pewter/40 focus:border-forest-ink focus:bg-pure-white focus:outline-none focus:ring-4 focus:ring-forest-ink/8 focus:ring-offset-0 disabled:cursor-wait disabled:opacity-70"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="relative flex flex-col">
+                      <span className="mb-6 pl-4 text-[12px] font-semibold uppercase tracking-wider text-pewter">
+                        Phone Number
+                      </span>
+                      <div className="relative flex items-center">
+                        <Phone
+                          className="absolute left-20 h-[18px] w-[18px] text-pewter"
+                          strokeWidth={1.8}
+                        />
+                        <input
+                          name="phone"
+                          type="tel"
+                          aria-label="Phone number"
+                          placeholder="e.g. +91 93453 43434"
+                          required
+                          autoComplete="tel"
+                          disabled={leadStatus === "submitting"}
+                          className="h-[56px] w-full rounded-[14px] border border-moss/45 bg-pure-white pl-50 pr-24 text-body text-charcoal transition-all placeholder:text-pewter/40 focus:border-forest-ink focus:bg-pure-white focus:outline-none focus:ring-4 focus:ring-forest-ink/8 focus:ring-offset-0 disabled:cursor-wait disabled:opacity-70"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="relative flex flex-col">
+                    <span className="mb-6 pl-4 text-[12px] font-semibold uppercase tracking-wider text-pewter">
+                      Delivery Area / Pincode
+                    </span>
+                    <div className="relative flex items-center">
+                      <MapPin
+                        className="absolute left-20 h-[18px] w-[18px] text-pewter"
+                        strokeWidth={1.8}
+                      />
+                      <input
+                        name="area"
+                        type="text"
+                        aria-label="Area or pincode in Bengaluru"
+                        placeholder="e.g. Indiranagar, 560038"
+                        required
+                        autoComplete="address-level2"
+                        disabled={leadStatus === "submitting"}
+                        className="h-[56px] w-full rounded-[14px] border border-moss/45 bg-pure-white pl-50 pr-24 text-body text-charcoal transition-all placeholder:text-pewter/40 focus:border-forest-ink focus:bg-pure-white focus:outline-none focus:ring-4 focus:ring-forest-ink/8 focus:ring-offset-0 disabled:cursor-wait disabled:opacity-70"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid gap-16 rounded-[18px] border border-moss/20 bg-bone/25 p-16 lg:p-18">
+                  <div className="mb-4 flex items-center gap-8">
+                    <span className="flex h-28 w-28 items-center justify-center rounded-[8px] bg-forest-ink/10 text-forest-ink">
+                      <CalendarDays className="h-[14px] w-[14px]" strokeWidth={1.9} />
+                    </span>
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-pewter">
+                      Order setup
+                    </span>
+                  </div>
+
+                  <div className="relative flex flex-col">
+                    <span className="mb-6 pl-4 text-[12px] font-semibold uppercase tracking-wider text-pewter">
+                      Request Type
+                    </span>
+                    <div className="grid grid-cols-2 gap-4 rounded-[16px] border border-moss/45 bg-pure-white p-2 shadow-[0_1px_0_rgba(255,255,255,0.6)_inset]">
+                      <label
+                        className={`flex min-h-[52px] cursor-pointer items-center justify-center gap-8 rounded-[12px] px-14 py-12 text-body-sm font-semibold transition-all ${
+                          requestType === "subscription"
+                            ? "bg-forest-ink text-pure-white shadow-md"
+                            : "text-charcoal hover:bg-bone/45 hover:shadow-sm"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="requestType"
+                          value="subscription"
+                          checked={requestType === "subscription"}
+                          onChange={() => setRequestType("subscription")}
+                          disabled={leadStatus === "submitting"}
+                          className="sr-only"
+                        />
+                        <CalendarDays className="h-[16px] w-[16px]" strokeWidth={2} />
+                        Subscription
+                      </label>
+                      <label
+                        className={`flex min-h-[52px] cursor-pointer items-center justify-center gap-8 rounded-[12px] px-14 py-12 text-body-sm font-semibold transition-all ${
+                          requestType === "order"
+                            ? "bg-forest-ink text-pure-white shadow-md"
+                            : "text-charcoal hover:bg-bone/45 hover:shadow-sm"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="requestType"
+                          value="order"
+                          checked={requestType === "order"}
+                          onChange={() => setRequestType("order")}
+                          disabled={leadStatus === "submitting"}
+                          className="sr-only"
+                        />
+                        <PackageCheck className="h-[16px] w-[16px]" strokeWidth={2} />
+                        One-time Order
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-12 md:grid-cols-[1.15fr_0.85fr]">
+                    <div className="relative flex flex-col">
+                      <span className="mb-6 pl-4 text-[12px] font-semibold uppercase tracking-wider text-pewter">
+                        Select Product
+                      </span>
+                      <div className="relative flex items-center">
+                        <Milk
+                          className="pointer-events-none absolute left-20 h-[18px] w-[18px] text-pewter"
+                          strokeWidth={1.8}
+                        />
+                        <select
+                          key={productOptionsKey}
+                          name="product"
+                          aria-label="Product"
+                          value={selectedProduct}
+                          onChange={(event) => setSelectedProduct(event.target.value)}
+                          disabled={leadStatus === "submitting"}
+                          className="h-[56px] w-full appearance-none rounded-[14px] border border-moss/45 bg-pure-white pl-50 pr-24 text-body text-charcoal transition-all focus:border-forest-ink focus:bg-pure-white focus:outline-none focus:ring-4 focus:ring-forest-ink/8 focus:ring-offset-0 disabled:cursor-wait disabled:opacity-70"
+                          style={{
+                            backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23223E36' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
+                            backgroundPosition: "right 20px center",
+                            backgroundRepeat: "no-repeat",
+                            backgroundSize: "16px",
+                          }}
+                        >
+                          {siteProducts.map((product) => (
+                            <option key={product.value} value={product.value}>
+                              {product.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="relative flex flex-col">
+                      <span className="mb-6 pl-4 text-[12px] font-semibold uppercase tracking-wider text-pewter">
+                        Daily Quantity ({formatOrderUnitLabel(selectedProductUnit)})
+                      </span>
+                      <div className="relative flex items-center">
+                        <Droplets
+                          className="absolute left-20 h-[18px] w-[18px] text-pewter"
+                          strokeWidth={1.8}
+                        />
+                        <input
+                          name="quantity"
+                          type="number"
+                          min="1"
+                          max="50"
+                          step="1"
+                          defaultValue="1"
+                          onFocus={(e) => e.target.select()}
+                          aria-label="Daily quantity"
+                          disabled={leadStatus === "submitting"}
+                          className="h-[56px] w-full rounded-[14px] border border-moss/45 bg-pure-white pl-50 pr-24 text-body text-charcoal transition-all focus:border-forest-ink focus:bg-pure-white focus:outline-none focus:ring-4 focus:ring-forest-ink/8 focus:ring-offset-0 disabled:cursor-wait disabled:opacity-70"
+                        />
+                        <span className="pointer-events-none absolute right-16 rounded-full bg-bone/70 px-8 py-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-pewter">
+                          {formatOrderUnitLabel(selectedProductUnit)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {requestType === "subscription" && (
+                    <div className="relative flex flex-col transition-all duration-300">
+                      <span className="mb-6 pl-4 text-[12px] font-semibold uppercase tracking-wider text-pewter">
+                        Delivery Plan
+                      </span>
+                      <div className="relative flex items-center">
+                        <CalendarDays
+                          className="pointer-events-none absolute left-20 h-[18px] w-[18px] text-pewter"
+                          strokeWidth={1.8}
+                        />
+                        <select
+                          name="plan"
+                          aria-label="Delivery plan"
+                          defaultValue="daily"
+                          disabled={leadStatus === "submitting"}
+                          className="h-[56px] w-full appearance-none rounded-[14px] border border-moss/45 bg-pure-white pl-50 pr-24 text-body text-charcoal transition-all focus:border-forest-ink focus:bg-pure-white focus:outline-none focus:ring-4 focus:ring-forest-ink/8 focus:ring-offset-0 disabled:cursor-wait disabled:opacity-70"
+                          style={{
+                            backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23223E36' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
+                            backgroundPosition: "right 20px center",
+                            backgroundRepeat: "no-repeat",
+                            backgroundSize: "16px",
+                          }}
+                        >
+                          <option value="daily">Daily delivery</option>
+                          <option value="alternate">Alternate-day delivery</option>
+                          <option value="custom">Custom schedule</option>
+                        </select>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="relative flex flex-col">
+                    <span className="mb-6 pl-4 text-[12px] font-semibold uppercase tracking-wider text-pewter">
+                      Delivery Notes (Optional)
+                    </span>
+                    <div className="relative flex items-center">
+                      <MessageSquare
+                        className="absolute left-20 top-20 h-[18px] w-[18px] text-pewter"
+                        strokeWidth={1.8}
+                      />
+                      <textarea
+                        name="notes"
+                        aria-label="Delivery notes"
+                        placeholder="e.g. Please leave at the gate, deliver before 7 AM"
+                        rows={3}
+                        disabled={leadStatus === "submitting"}
+                        className="w-full resize-none rounded-[14px] border border-moss/45 bg-pure-white pl-50 pr-24 py-16 text-body text-charcoal transition-all placeholder:text-pewter/40 focus:border-forest-ink focus:bg-pure-white focus:outline-none focus:ring-4 focus:ring-forest-ink/8 focus:ring-offset-0 disabled:cursor-wait disabled:opacity-70"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid gap-12 md:grid-cols-[1fr_auto] md:items-center md:gap-16">
+                    <p className="text-[12px] leading-relaxed text-pewter">
+                      Fresh dairy requests are processed by the team and confirmed on WhatsApp.
+                    </p>
+                    <button
+                      type="submit"
+                      disabled={leadStatus === "submitting"}
+                      className="relative inline-flex w-full items-center justify-center gap-8 rounded-[14px] bg-forest-ink px-28 py-18 text-body-sm font-semibold uppercase tracking-wider text-pure-white shadow-md transition-all duration-300 hover:scale-[1.01] hover:bg-forest-ink/95 hover:shadow-lg active:scale-[0.99] disabled:cursor-wait disabled:opacity-70 md:w-auto"
+                    >
+                      {leadStatus === "submitting" ? (
+                        <>
+                          <span className="h-16 w-16 animate-spin rounded-full border-2 border-pure-white border-t-transparent"></span>
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          {requestType === "order" ? "Send Order Request" : "Start Subscription"}
+                          <Send className="h-[15px] w-[15px]" strokeWidth={2} aria-hidden="true" />
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {leadMessage ? (
+                  <div
+                    role={leadStatus === "error" ? "alert" : "status"}
+                    className={`mt-10 flex items-start gap-12 rounded-[12px] p-16 text-body-sm leading-relaxed border ${
+                      leadStatus === "success"
+                        ? "bg-forest-ink/5 border-forest-ink/20 text-forest-ink"
+                        : "bg-red-50 border-red-200 text-red-700"
+                    }`}
+                  >
+                    <CheckCircle2
+                      className={`h-20 w-20 shrink-0 mt-2 ${
+                        leadStatus === "success" ? "text-forest-ink" : "text-red-600"
+                      }`}
+                      strokeWidth={2}
+                    />
+                    <span>{leadMessage}</span>
+                  </div>
+                ) : null}
+              </form>
+            </div>
           </div>
         </section>
 
@@ -916,12 +1425,15 @@ function ProductCard({
   desc,
   bgColor,
   icon,
+  onSelect,
 }: {
   code: string;
   name: string;
+  value: string;
   desc: string;
   bgColor: string;
   icon: LucideIcon;
+  onSelect: () => void;
 }) {
   return (
     <div
@@ -931,12 +1443,20 @@ function ProductCard({
         <IconBadge icon={icon} tone="soft" />
       </div>
       <div className="flex-grow">
+        <p className="mb-8 text-caption font-medium uppercase tracking-[0.16em] text-charcoal/60">
+          {code}
+        </p>
         <h3 className="text-subheading font-light leading-tight text-charcoal transition-colors duration-300 group-hover:text-forest-ink">
           {name}
         </h3>
         <p className="mt-10 text-body-sm leading-relaxed text-graphite">{desc}</p>
       </div>
-      <button className="mt-20 flex w-full items-center justify-center gap-5 rounded-buttons bg-forest-ink px-5 py-2.5 text-body-sm font-medium text-pure-white transition-all duration-300 hover:scale-[1.02] hover:bg-forest-ink/90 active:scale-[0.98]">
+      <button
+        type="button"
+        onClick={onSelect}
+        aria-label={`Request ${name}`}
+        className="mt-20 flex w-full items-center justify-center gap-5 rounded-buttons bg-forest-ink px-5 py-2.5 text-body-sm font-medium text-pure-white transition-all duration-300 hover:scale-[1.02] hover:bg-forest-ink/90 active:scale-[0.98]"
+      >
         Shop Now
         <ArrowRight
           className="h-[15px] w-[15px] transition-transform duration-300 group-hover:translate-x-1"
@@ -967,6 +1487,7 @@ function FounderCard({
           alt={name}
           className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
           loading="lazy"
+          decoding="async"
         />
       </div>
       <div className="flex flex-col justify-between">
