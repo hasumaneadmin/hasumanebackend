@@ -1,0 +1,403 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<coverage generated="1782308993891" clover="3.2.0">
+  <project timestamp="1782308993891" name="All files">
+    <metrics statements="328" coveredstatements="327" conditionals="239" coveredconditionals="193" methods="81" coveredmethods="80" elements="648" coveredelements="600" complexity="0" loc="328" ncloc="328" packages="10" files="13" classes="13"/>
+    <package name="common.guards">
+      <metrics statements="64" coveredstatements="63" conditionals="42" coveredconditionals="33" methods="8" coveredmethods="8"/>
+      <file name="csrf.guard.ts" path="C:\Users\Tejas\.gemini\antigravity-ide\scratch\hasumane\backend\src\common\guards\csrf.guard.ts">
+        <metrics statements="18" coveredstatements="18" conditionals="16" coveredconditionals="13" methods="2" coveredmethods="2"/>
+        <line num="1" count="1" type="stmt"/>
+        <line num="2" count="1" type="stmt"/>
+        <line num="3" count="1" type="stmt"/>
+        <line num="4" count="1" type="stmt"/>
+        <line num="7" count="1" type="stmt"/>
+        <line num="10" count="1" type="stmt"/>
+        <line num="12" count="3" type="cond" truecount="6" falsecount="2"/>
+        <line num="13" count="3" type="stmt"/>
+        <line num="17" count="4" type="stmt"/>
+        <line num="21" count="4" type="cond" truecount="1" falsecount="0"/>
+        <line num="23" count="3" type="stmt"/>
+        <line num="24" count="3" type="cond" truecount="1" falsecount="0"/>
+        <line num="26" count="2" type="cond" truecount="1" falsecount="1"/>
+        <line num="27" count="2" type="stmt"/>
+        <line num="28" count="2" type="stmt"/>
+        <line num="30" count="2" type="cond" truecount="4" falsecount="0"/>
+        <line num="31" count="1" type="stmt"/>
+        <line num="34" count="1" type="stmt"/>
+      </file>
+      <file name="jwt-auth.guard.ts" path="C:\Users\Tejas\.gemini\antigravity-ide\scratch\hasumane\backend\src\common\guards\jwt-auth.guard.ts">
+        <metrics statements="26" coveredstatements="26" conditionals="16" coveredconditionals="13" methods="3" coveredmethods="3"/>
+        <line num="1" count="1" type="stmt"/>
+        <line num="2" count="1" type="stmt"/>
+        <line num="3" count="1" type="stmt"/>
+        <line num="4" count="1" type="stmt"/>
+        <line num="5" count="1" type="stmt"/>
+        <line num="18" count="1" type="stmt"/>
+        <line num="20" count="4" type="cond" truecount="6" falsecount="2"/>
+        <line num="21" count="4" type="cond" truecount="3" falsecount="1"/>
+        <line num="22" count="4" type="stmt"/>
+        <line num="26" count="4" type="stmt"/>
+        <line num="30" count="4" type="cond" truecount="1" falsecount="0"/>
+        <line num="32" count="3" type="stmt"/>
+        <line num="33" count="3" type="stmt"/>
+        <line num="34" count="3" type="cond" truecount="1" falsecount="0"/>
+        <line num="35" count="1" type="stmt"/>
+        <line num="38" count="2" type="stmt"/>
+        <line num="39" count="2" type="stmt"/>
+        <line num="42" count="2" type="cond" truecount="1" falsecount="0"/>
+        <line num="43" count="1" type="stmt"/>
+        <line num="45" count="1" type="stmt"/>
+        <line num="51" count="1" type="stmt"/>
+        <line num="53" count="1" type="stmt"/>
+        <line num="58" count="3" type="stmt"/>
+        <line num="59" count="3" type="cond" truecount="1" falsecount="0"/>
+        <line num="60" count="2" type="stmt"/>
+        <line num="62" count="1" type="stmt"/>
+      </file>
+      <file name="roles.guard.ts" path="C:\Users\Tejas\.gemini\antigravity-ide\scratch\hasumane\backend\src\common\guards\roles.guard.ts">
+        <metrics statements="20" coveredstatements="19" conditionals="10" coveredconditionals="7" methods="3" coveredmethods="3"/>
+        <line num="1" count="1" type="stmt"/>
+        <line num="2" count="1" type="stmt"/>
+        <line num="3" count="1" type="stmt"/>
+        <line num="4" count="1" type="stmt"/>
+        <line num="5" count="1" type="stmt"/>
+        <line num="9" count="1" type="stmt"/>
+        <line num="10" count="4" type="cond" truecount="3" falsecount="1"/>
+        <line num="13" count="4" type="stmt"/>
+        <line num="17" count="4" type="cond" truecount="1" falsecount="0"/>
+        <line num="19" count="3" type="stmt"/>
+        <line num="23" count="3" type="cond" truecount="1" falsecount="0"/>
+        <line num="25" count="2" type="stmt"/>
+        <line num="26" count="2" type="stmt"/>
+        <line num="27" count="2" type="cond" truecount="0" falsecount="1"/>
+        <line num="28" count="0" type="stmt"/>
+        <line num="31" count="2" type="cond" truecount="1" falsecount="1"/>
+        <line num="32" count="2" type="stmt"/>
+        <line num="33" count="2" type="cond" truecount="1" falsecount="0"/>
+        <line num="34" count="1" type="stmt"/>
+        <line num="36" count="1" type="stmt"/>
+      </file>
+    </package>
+    <package name="common.interceptors">
+      <metrics statements="32" coveredstatements="32" conditionals="35" coveredconditionals="31" methods="8" coveredmethods="8"/>
+      <file name="logging.interceptor.ts" path="C:\Users\Tejas\.gemini\antigravity-ide\scratch\hasumane\backend\src\common\interceptors\logging.interceptor.ts">
+        <metrics statements="20" coveredstatements="20" conditionals="22" coveredconditionals="19" methods="6" coveredmethods="6"/>
+        <line num="1" count="1" type="stmt"/>
+        <line num="7" count="1" type="stmt"/>
+        <line num="9" count="1" type="stmt"/>
+        <line num="10" count="1" type="stmt"/>
+        <line num="14" count="1" type="stmt"/>
+        <line num="16" count="4" type="cond" truecount="6" falsecount="2"/>
+        <line num="17" count="4" type="stmt"/>
+        <line num="21" count="4" type="stmt"/>
+        <line num="22" count="4" type="stmt"/>
+        <line num="23" count="4" type="stmt"/>
+        <line num="25" count="4" type="stmt"/>
+        <line num="27" count="2" type="stmt"/>
+        <line num="28" count="2" type="stmt"/>
+        <line num="34" count="2" type="stmt"/>
+        <line num="48" count="2" type="stmt"/>
+        <line num="49" count="2" type="stmt"/>
+        <line num="55" count="2" type="stmt"/>
+        <line num="68" count="2" type="stmt"/>
+        <line num="74" count="4" type="stmt"/>
+        <line num="75" count="4" type="cond" truecount="2" falsecount="0"/>
+      </file>
+      <file name="response.interceptor.ts" path="C:\Users\Tejas\.gemini\antigravity-ide\scratch\hasumane\backend\src\common\interceptors\response.interceptor.ts">
+        <metrics statements="12" coveredstatements="12" conditionals="13" coveredconditionals="12" methods="2" coveredmethods="2"/>
+        <line num="1" count="1" type="stmt"/>
+        <line num="9" count="1" type="stmt"/>
+        <line num="19" count="1" type="stmt"/>
+        <line num="21" count="3" type="stmt"/>
+        <line num="22" count="3" type="stmt"/>
+        <line num="23" count="3" type="stmt"/>
+        <line num="25" count="3" type="cond" truecount="1" falsecount="1"/>
+        <line num="26" count="3" type="cond" truecount="1" falsecount="0"/>
+        <line num="32" count="1" type="stmt"/>
+        <line num="35" count="2" type="cond" truecount="1" falsecount="0"/>
+        <line num="42" count="1" type="stmt"/>
+        <line num="45" count="1" type="stmt"/>
+      </file>
+    </package>
+    <package name="common.utils">
+      <metrics statements="7" coveredstatements="7" conditionals="4" coveredconditionals="3" methods="2" coveredmethods="2"/>
+      <file name="pagination.ts" path="C:\Users\Tejas\.gemini\antigravity-ide\scratch\hasumane\backend\src\common\utils\pagination.ts">
+        <metrics statements="7" coveredstatements="7" conditionals="4" coveredconditionals="3" methods="2" coveredmethods="2"/>
+        <line num="12" count="2" type="stmt"/>
+        <line num="13" count="6" type="cond" truecount="2" falsecount="0"/>
+        <line num="14" count="6" type="cond" truecount="1" falsecount="1"/>
+        <line num="15" count="6" type="stmt"/>
+        <line num="23" count="2" type="stmt"/>
+        <line num="24" count="6" type="stmt"/>
+        <line num="25" count="6" type="stmt"/>
+      </file>
+    </package>
+    <package name="modules.analytics">
+      <metrics statements="91" coveredstatements="91" conditionals="42" coveredconditionals="34" methods="29" coveredmethods="28"/>
+      <file name="analytics.service.ts" path="C:\Users\Tejas\.gemini\antigravity-ide\scratch\hasumane\backend\src\modules\analytics\analytics.service.ts">
+        <metrics statements="91" coveredstatements="91" conditionals="42" coveredconditionals="34" methods="29" coveredmethods="28"/>
+        <line num="1" count="1" type="stmt"/>
+        <line num="2" count="1" type="stmt"/>
+        <line num="11" count="1" type="stmt"/>
+        <line num="12" count="6" type="cond" truecount="3" falsecount="1"/>
+        <line num="15" count="3" type="stmt"/>
+        <line num="17" count="3" type="stmt"/>
+        <line num="30" count="3" type="stmt"/>
+        <line num="48" count="1" type="stmt"/>
+        <line num="49" count="1" type="stmt"/>
+        <line num="68" count="1" type="stmt"/>
+        <line num="83" count="1" type="stmt"/>
+        <line num="84" count="1" type="stmt"/>
+        <line num="85" count="1" type="stmt"/>
+        <line num="90" count="1" type="stmt"/>
+        <line num="94" count="1" type="stmt"/>
+        <line num="95" count="1" type="stmt"/>
+        <line num="96" count="1" type="stmt"/>
+        <line num="101" count="1" type="stmt"/>
+        <line num="105" count="1" type="stmt"/>
+        <line num="109" count="1" type="stmt"/>
+        <line num="110" count="1" type="stmt"/>
+        <line num="114" count="2" type="stmt"/>
+        <line num="115" count="11" type="stmt"/>
+        <line num="116" count="2" type="stmt"/>
+        <line num="117" count="2" type="stmt"/>
+        <line num="119" count="11" type="stmt"/>
+        <line num="121" count="44" type="cond" truecount="2" falsecount="0"/>
+        <line num="122" count="44" type="stmt"/>
+        <line num="127" count="2" type="stmt"/>
+        <line num="131" count="1" type="stmt"/>
+        <line num="132" count="1" type="stmt"/>
+        <line num="133" count="1" type="stmt"/>
+        <line num="134" count="1" type="stmt"/>
+        <line num="141" count="1" type="stmt"/>
+        <line num="142" count="1" type="stmt"/>
+        <line num="143" count="1" type="stmt"/>
+        <line num="144" count="5" type="stmt"/>
+        <line num="145" count="5" type="stmt"/>
+        <line num="147" count="1" type="stmt"/>
+        <line num="148" count="1" type="stmt"/>
+        <line num="149" count="1" type="stmt"/>
+        <line num="150" count="1" type="stmt"/>
+        <line num="151" count="5" type="stmt"/>
+        <line num="153" count="1" type="stmt"/>
+        <line num="154" count="1" type="stmt"/>
+        <line num="155" count="1" type="stmt"/>
+        <line num="159" count="3" type="stmt"/>
+        <line num="160" count="3" type="stmt"/>
+        <line num="161" count="3" type="stmt"/>
+        <line num="162" count="3" type="stmt"/>
+        <line num="163" count="3" type="stmt"/>
+        <line num="164" count="3" type="stmt"/>
+        <line num="169" count="3" type="stmt"/>
+        <line num="180" count="4" type="stmt"/>
+        <line num="195" count="4" type="cond" truecount="2" falsecount="0"/>
+        <line num="196" count="4" type="stmt"/>
+        <line num="204" count="4" type="stmt"/>
+        <line num="213" count="4" type="stmt"/>
+        <line num="221" count="4" type="stmt"/>
+        <line num="222" count="6" type="stmt"/>
+        <line num="223" count="6" type="stmt"/>
+        <line num="224" count="6" type="stmt"/>
+        <line num="225" count="4" type="stmt"/>
+        <line num="228" count="6" type="stmt"/>
+        <line num="235" count="4" type="stmt"/>
+        <line num="238" count="6" type="stmt"/>
+        <line num="239" count="6" type="stmt"/>
+        <line num="240" count="6" type="stmt"/>
+        <line num="241" count="4" type="stmt"/>
+        <line num="253" count="7" type="cond" truecount="4" falsecount="0"/>
+        <line num="254" count="1" type="stmt"/>
+        <line num="256" count="6" type="stmt"/>
+        <line num="257" count="6" type="stmt"/>
+        <line num="258" count="6" type="cond" truecount="1" falsecount="0"/>
+        <line num="259" count="6" type="cond" truecount="1" falsecount="0"/>
+        <line num="260" count="6" type="cond" truecount="1" falsecount="0"/>
+        <line num="261" count="6" type="stmt"/>
+        <line num="265" count="3" type="stmt"/>
+        <line num="269" count="8" type="cond" truecount="1" falsecount="0"/>
+        <line num="270" count="7" type="cond" truecount="2" falsecount="1"/>
+        <line num="271" count="7" type="stmt"/>
+        <line num="272" count="7" type="stmt"/>
+        <line num="273" count="17" type="cond" truecount="1" falsecount="0"/>
+        <line num="274" count="2" type="stmt"/>
+        <line num="275" count="4" type="stmt"/>
+        <line num="277" count="2" type="stmt"/>
+        <line num="279" count="15" type="cond" truecount="4" falsecount="0"/>
+        <line num="280" count="9" type="stmt"/>
+        <line num="281" count="4" type="stmt"/>
+        <line num="283" count="11" type="stmt"/>
+        <line num="285" count="7" type="cond" truecount="1" falsecount="1"/>
+      </file>
+    </package>
+    <package name="modules.audit">
+      <metrics statements="24" coveredstatements="24" conditionals="27" coveredconditionals="21" methods="7" coveredmethods="7"/>
+      <file name="audit-log.service.ts" path="C:\Users\Tejas\.gemini\antigravity-ide\scratch\hasumane\backend\src\modules\audit\audit-log.service.ts">
+        <metrics statements="24" coveredstatements="24" conditionals="27" coveredconditionals="21" methods="7" coveredmethods="7"/>
+        <line num="1" count="1" type="stmt"/>
+        <line num="4" count="1" type="stmt"/>
+        <line num="5" count="1" type="stmt"/>
+        <line num="21" count="1" type="stmt"/>
+        <line num="22" count="4" type="cond" truecount="3" falsecount="1"/>
+        <line num="25" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="26" count="2" type="stmt"/>
+        <line num="44" count="1" type="stmt"/>
+        <line num="45" count="1" type="stmt"/>
+        <line num="46" count="1" type="stmt"/>
+        <line num="56" count="1" type="stmt"/>
+        <line num="63" count="1" type="stmt"/>
+        <line num="64" count="1" type="stmt"/>
+        <line num="92" count="1" type="stmt"/>
+        <line num="94" count="1" type="stmt"/>
+        <line num="103" count="2" type="stmt"/>
+        <line num="104" count="2" type="cond" truecount="1" falsecount="0"/>
+        <line num="105" count="1" type="stmt"/>
+        <line num="107" count="2" type="cond" truecount="1" falsecount="0"/>
+        <line num="108" count="1" type="stmt"/>
+        <line num="118" count="2" type="stmt"/>
+        <line num="131" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="135" count="6" type="cond" truecount="1" falsecount="0"/>
+        <line num="136" count="1" type="stmt"/>
+      </file>
+    </package>
+    <package name="modules.inventory">
+      <metrics statements="33" coveredstatements="33" conditionals="16" coveredconditionals="12" methods="11" coveredmethods="11"/>
+      <file name="inventory.service.ts" path="C:\Users\Tejas\.gemini\antigravity-ide\scratch\hasumane\backend\src\modules\inventory\inventory.service.ts">
+        <metrics statements="33" coveredstatements="33" conditionals="16" coveredconditionals="12" methods="11" coveredmethods="11"/>
+        <line num="1" count="1" type="stmt"/>
+        <line num="3" count="1" type="stmt"/>
+        <line num="7" count="1" type="stmt"/>
+        <line num="8" count="5" type="cond" truecount="3" falsecount="1"/>
+        <line num="11" count="1" type="stmt"/>
+        <line num="16" count="1" type="stmt"/>
+        <line num="20" count="1" type="stmt"/>
+        <line num="24" count="1" type="stmt"/>
+        <line num="25" count="2" type="stmt"/>
+        <line num="30" count="1" type="stmt"/>
+        <line num="34" count="1" type="stmt"/>
+        <line num="38" count="1" type="stmt"/>
+        <line num="44" count="1" type="stmt"/>
+        <line num="48" count="5" type="stmt"/>
+        <line num="49" count="5" type="stmt"/>
+        <line num="50" count="5" type="cond" truecount="1" falsecount="0"/>
+        <line num="52" count="4" type="stmt"/>
+        <line num="65" count="4" type="stmt"/>
+        <line num="66" count="4" type="stmt"/>
+        <line num="76" count="4" type="stmt"/>
+        <line num="90" count="4" type="stmt"/>
+        <line num="98" count="4" type="stmt"/>
+        <line num="99" count="4" type="stmt"/>
+        <line num="100" count="4" type="cond" truecount="0" falsecount="1"/>
+        <line num="101" count="4" type="cond" truecount="1" falsecount="0"/>
+        <line num="102" count="4" type="cond" truecount="1" falsecount="0"/>
+        <line num="103" count="4" type="cond" truecount="1" falsecount="0"/>
+        <line num="104" count="4" type="cond" truecount="1" falsecount="0"/>
+        <line num="105" count="4" type="stmt"/>
+        <line num="112" count="4" type="cond" truecount="0" falsecount="1"/>
+        <line num="113" count="4" type="cond" truecount="3" falsecount="0"/>
+        <line num="114" count="1" type="stmt"/>
+        <line num="118" count="12" type="stmt"/>
+      </file>
+    </package>
+    <package name="modules.logging">
+      <metrics statements="16" coveredstatements="16" conditionals="32" coveredconditionals="25" methods="4" coveredmethods="4"/>
+      <file name="logging.service.ts" path="C:\Users\Tejas\.gemini\antigravity-ide\scratch\hasumane\backend\src\modules\logging\logging.service.ts">
+        <metrics statements="16" coveredstatements="16" conditionals="32" coveredconditionals="25" methods="4" coveredmethods="4"/>
+        <line num="1" count="1" type="stmt"/>
+        <line num="3" count="1" type="stmt"/>
+        <line num="4" count="1" type="stmt"/>
+        <line num="5" count="1" type="stmt"/>
+        <line num="34" count="1" type="stmt"/>
+        <line num="37" count="7" type="cond" truecount="3" falsecount="1"/>
+        <line num="38" count="7" type="stmt"/>
+        <line num="59" count="2" type="stmt"/>
+        <line num="63" count="2" type="stmt"/>
+        <line num="79" count="2" type="stmt"/>
+        <line num="80" count="2" type="stmt"/>
+        <line num="100" count="1" type="stmt"/>
+        <line num="108" count="3" type="stmt"/>
+        <line num="109" count="3" type="stmt"/>
+        <line num="133" count="3" type="stmt"/>
+        <line num="143" count="3" type="stmt"/>
+      </file>
+    </package>
+    <package name="modules.monitoring">
+      <metrics statements="33" coveredstatements="33" conditionals="8" coveredconditionals="6" methods="5" coveredmethods="5"/>
+      <file name="metrics.service.ts" path="C:\Users\Tejas\.gemini\antigravity-ide\scratch\hasumane\backend\src\modules\monitoring\metrics.service.ts">
+        <metrics statements="33" coveredstatements="33" conditionals="8" coveredconditionals="6" methods="5" coveredmethods="5"/>
+        <line num="1" count="1" type="stmt"/>
+        <line num="2" count="1" type="stmt"/>
+        <line num="3" count="1" type="stmt"/>
+        <line num="13" count="1" type="stmt"/>
+        <line num="14" count="2" type="stmt"/>
+        <line num="15" count="2" type="stmt"/>
+        <line num="16" count="2" type="stmt"/>
+        <line num="17" count="2" type="stmt"/>
+        <line num="18" count="2" type="stmt"/>
+        <line num="19" count="2" type="stmt"/>
+        <line num="20" count="2" type="stmt"/>
+        <line num="22" count="2" type="cond" truecount="3" falsecount="1"/>
+        <line num="25" count="2" type="stmt"/>
+        <line num="26" count="2" type="stmt"/>
+        <line num="27" count="2" type="cond" truecount="1" falsecount="0"/>
+        <line num="28" count="2" type="stmt"/>
+        <line num="29" count="2" type="stmt"/>
+        <line num="33" count="2" type="stmt"/>
+        <line num="34" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="35" count="2" type="stmt"/>
+        <line num="36" count="2" type="stmt"/>
+        <line num="45" count="2" type="stmt"/>
+        <line num="78" count="2" type="stmt"/>
+        <line num="82" count="2" type="stmt"/>
+        <line num="86" count="2" type="stmt"/>
+        <line num="87" count="2" type="stmt"/>
+        <line num="88" count="2" type="stmt"/>
+        <line num="89" count="2" type="stmt"/>
+        <line num="90" count="2" type="stmt"/>
+        <line num="91" count="2" type="stmt"/>
+        <line num="92" count="2" type="stmt"/>
+        <line num="93" count="2" type="cond" truecount="0" falsecount="1"/>
+        <line num="94" count="2" type="stmt"/>
+      </file>
+    </package>
+    <package name="modules.notifications">
+      <metrics statements="16" coveredstatements="16" conditionals="24" coveredconditionals="21" methods="3" coveredmethods="3"/>
+      <file name="notification.service.ts" path="C:\Users\Tejas\.gemini\antigravity-ide\scratch\hasumane\backend\src\modules\notifications\notification.service.ts">
+        <metrics statements="16" coveredstatements="16" conditionals="24" coveredconditionals="21" methods="3" coveredmethods="3"/>
+        <line num="1" count="1" type="stmt"/>
+        <line num="2" count="1" type="stmt"/>
+        <line num="3" count="1" type="stmt"/>
+        <line num="6" count="1" type="stmt"/>
+        <line num="8" count="5" type="cond" truecount="6" falsecount="2"/>
+        <line num="9" count="5" type="stmt"/>
+        <line num="13" count="1" type="stmt"/>
+        <line num="18" count="1" type="stmt"/>
+        <line num="22" count="4" type="stmt"/>
+        <line num="25" count="4" type="cond" truecount="1" falsecount="0"/>
+        <line num="26" count="3" type="cond" truecount="1" falsecount="0"/>
+        <line num="27" count="1" type="stmt"/>
+        <line num="31" count="2" type="cond" truecount="5" falsecount="0"/>
+        <line num="35" count="2" type="stmt"/>
+        <line num="49" count="2" type="stmt"/>
+        <line num="59" count="2" type="stmt"/>
+      </file>
+    </package>
+    <package name="modules.rbac">
+      <metrics statements="12" coveredstatements="12" conditionals="9" coveredconditionals="7" methods="4" coveredmethods="4"/>
+      <file name="rbac.service.ts" path="C:\Users\Tejas\.gemini\antigravity-ide\scratch\hasumane\backend\src\modules\rbac\rbac.service.ts">
+        <metrics statements="12" coveredstatements="12" conditionals="9" coveredconditionals="7" methods="4" coveredmethods="4"/>
+        <line num="1" count="1" type="stmt"/>
+        <line num="2" count="1" type="stmt"/>
+        <line num="3" count="1" type="stmt"/>
+        <line num="7" count="1" type="stmt"/>
+        <line num="9" count="2" type="cond" truecount="6" falsecount="2"/>
+        <line num="10" count="2" type="stmt"/>
+        <line num="14" count="1" type="stmt"/>
+        <line num="20" count="1" type="stmt"/>
+        <line num="28" count="1" type="stmt"/>
+        <line num="38" count="1" type="stmt"/>
+        <line num="47" count="1" type="stmt"/>
+        <line num="51" count="2" type="stmt"/>
+      </file>
+    </package>
+  </project>
+</coverage>
