@@ -13,9 +13,11 @@ console.log("Starting HasuMane services from backend package...");
 
 const backendMain = path.resolve(__dirname, "../dist/src/main.js");
 const frontendDir = path.resolve(__dirname, "../dist-frontend");
+const frontendServerJs = path.resolve(frontendDir, "dist/server/server.js");
 
 console.log(`- Backend path: ${backendMain}`);
 console.log(`- Frontend path: ${frontendDir}`);
+console.log(`- Frontend server: ${frontendServerJs}`);
 
 // Spawn NestJS Backend on port 5001
 const backendProcess = cp.spawn(
@@ -27,18 +29,30 @@ const backendProcess = cp.spawn(
   }
 );
 
-// Spawn TanStack Start Frontend on port 3001
-const isWin = process.platform === "win32";
+backendProcess.on("error", (err) => {
+  console.error("[Backend] Failed to start:", err.message);
+});
+
+// Spawn TanStack Start Frontend SSR server using the Nitro Cloudflare adapter
+// wrapped by a Node.js http server shim
 const frontendProcess = cp.spawn(
-  isWin ? "npm.cmd" : "npm",
-  ["run", "start", "--", "--port", "3001", "--host", "0.0.0.0"],
+  "node",
+  [path.resolve(__dirname, "frontend-server-shim.js")],
   {
     cwd: frontendDir,
     stdio: "inherit",
-    env: { ...process.env, PORT: "3001" },
-    shell: isWin,
+    env: {
+      ...process.env,
+      PORT: "3001",
+      HOST: "127.0.0.1",
+      FRONTEND_DIR: frontendDir,
+    },
   }
 );
+
+frontendProcess.on("error", (err) => {
+  console.error("[Frontend] Failed to start:", err.message);
+});
 
 function killChildren() {
   console.log("Stopping all services...");
@@ -62,12 +76,6 @@ const server = http.createServer((req, res) => {
   if (host.includes("api.hasumane.com")) {
     target = API_TARGET;
   } else if (host.includes("crm.hasumane.com")) {
-    // If accessing the root path of the CRM subdomain, redirect to the admin panel
-    if (req.url === "/" || req.url === "") {
-      res.writeHead(302, { Location: "/admin" });
-      res.end();
-      return;
-    }
     target = CRM_TARGET;
   }
 
@@ -97,7 +105,7 @@ const server = http.createServer((req, res) => {
 });
 
 // Proxy listens on port 3000 (standard port for the main Dokploy service container)
-const proxyPort = process.env.PROXY_PORT || 3000;
+const proxyPort = process.env.PORT || 3000;
 server.listen(proxyPort, "0.0.0.0", () => {
   console.log(`[Proxy] Reverse proxy listening on http://0.0.0.0:${proxyPort}`);
   console.log(`[Proxy] Routing api.hasumane.com -> ${API_TARGET}`);
