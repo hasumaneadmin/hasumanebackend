@@ -6,7 +6,6 @@
   "type": "module",
   "scripts": {
     "start": "node scripts/start-production.js",
-    "postinstall": "cd dist-frontend && npm install --include=dev",
     "dev": "nest start --watch",
     "build": "nest build",
     "lint": "tsc --noEmit",
