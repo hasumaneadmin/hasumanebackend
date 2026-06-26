@@ -5,7 +5,7 @@
   "main": "dist/src/main.js",
   "type": "module",
   "scripts": {
-    "start": "node dist/src/main.js",
+    "start": "node scripts/start-production.js",
     "dev": "nest start --watch",
     "build": "nest build",
     "lint": "tsc --noEmit",
@@ -100,5 +100,8 @@
       }
     },
     "testEnvironment": "node"
+  },
+  "engines": {
+    "node": ">=22.0.0"
   }
 }
