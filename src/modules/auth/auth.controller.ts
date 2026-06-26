@@ -77,9 +77,11 @@ export class AuthController {
     @Req() request: AuthenticatedRequest,
     @Res({ passthrough: true }) res: Response,
   ) {
-    res.clearCookie("access_token");
-    res.clearCookie("refresh_token");
-    res.clearCookie("csrf_token");
+    const secure = process.env.NODE_ENV === "production";
+    const clearOptions = { path: "/", secure, sameSite: "lax" as const };
+    res.clearCookie("access_token", clearOptions);
+    res.clearCookie("refresh_token", clearOptions);
+    res.clearCookie("csrf_token", clearOptions);
     return this.authService.logout(user?.sessionId, request);
   }
 
@@ -137,22 +139,25 @@ export class AuthController {
     tokens: { accessToken: string; refreshToken: string; csrfToken: string },
   ) {
     const secure = process.env.NODE_ENV === "production";
-    res.cookie("access_token", tokens.accessToken, {
-      httpOnly: true,
+    const cookieOptions = {
+      path: "/",
       secure,
-      sameSite: "lax",
+      sameSite: "lax" as const,
+      signed: true,
+    };
+    res.cookie("access_token", tokens.accessToken, {
+      ...cookieOptions,
+      httpOnly: true,
       maxAge: 15 * 60 * 1000,
     });
     res.cookie("refresh_token", tokens.refreshToken, {
+      ...cookieOptions,
       httpOnly: true,
-      secure,
-      sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
     res.cookie("csrf_token", tokens.csrfToken, {
+      ...cookieOptions,
       httpOnly: false,
-      secure,
-      sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
   }

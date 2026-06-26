@@ -14,6 +14,7 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   const port = configService.get<number>("app.port") || 5000;
   const corsOrigins = configService.get<string[]>("app.corsOrigins") || [];
+  const cookieSecret = configService.getOrThrow<string>("app.cookieSecret");
 
   app.setGlobalPrefix("api");
   app.enableVersioning({
@@ -29,7 +30,7 @@ async function bootstrap() {
       crossOriginResourcePolicy: { policy: "cross-origin" },
     }),
   );
-  app.use(cookieParser());
+  app.use(cookieParser(cookieSecret));
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

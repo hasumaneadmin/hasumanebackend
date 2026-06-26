@@ -1,4 +1,5 @@
 import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { Role } from "../../common/constants/roles.js";
 import type { AuthenticatedRequest } from "../../common/types/authenticated-request.js";
 import { PrismaService } from "../../prisma/prisma.service.js";
@@ -9,10 +10,11 @@ export class AdminSessionService {
   constructor(
     private readonly authService: AuthService,
     private readonly prisma: PrismaService,
+    private readonly configService: ConfigService,
   ) {}
 
   async create(password: string, request: AuthenticatedRequest) {
-    const expectedToken = process.env.ADMIN_API_TOKEN || "sujan";
+    const expectedToken = this.configService.getOrThrow<string>("app.adminApiToken");
     if (!password || password !== expectedToken) {
       await this.writeLogin(null, "failed", request);
       throw new UnauthorizedException("Invalid admin token.");

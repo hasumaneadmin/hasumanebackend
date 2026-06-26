@@ -28,7 +28,7 @@ export class CsrfGuard implements CanActivate {
 
     const headerName = this.configService.get<string>("app.csrfHeader") || "x-csrf-token";
     const headerToken = request.header(headerName);
-    const cookieToken = request.cookies?.csrf_token;
+    const cookieToken = request.signedCookies?.csrf_token || request.cookies?.csrf_token;
 
     if (!headerToken) {
       throw new ForbiddenException("Invalid CSRF token.");
