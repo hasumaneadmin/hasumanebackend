@@ -17,33 +17,6 @@
       .find((element) => element.textContent?.trim().toLowerCase() === "scroll to explore");
   }
 
-  function loaderMarkup() {
-    return `
-      <div class="hasu-arva-loader__mark">
-        <div class="hasu-arva-loader__ring"></div>
-        <div class="hasu-arva-loader__leaf" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"></path>
-            <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"></path>
-          </svg>
-        </div>
-        <div class="hasu-arva-loader__name">HasuMane</div>
-      </div>
-    `;
-  }
-
-  function ensureLoader() {
-    const existing = document.querySelector(".hasu-arva-loader");
-    if (existing) return existing;
-
-    const loader = document.createElement("div");
-    loader.className = "loader hasu-arva-loader";
-    loader.setAttribute("aria-hidden", "true");
-    loader.innerHTML = loaderMarkup();
-    document.body.prepend(loader);
-    return loader;
-  }
-
   function prepareArvaElements() {
     const ticker = findTicker();
     const header = document.querySelector("header");
@@ -56,64 +29,10 @@
 
   function startArvaPreloader() {
     prepareArvaElements();
-
-    if (reduceMotion.matches) {
-      root.classList.remove("hasu-arva-preloader");
-      root.classList.add("hasu-arva-loaded");
-      return;
-    }
-
-    root.classList.add("hasu-arva-preloader");
-    document.body.classList.add("preloader");
-
-    const loader = ensureLoader();
-    const video = document.querySelector(".hero-video");
-    const startedAt = window.performance?.now?.() ?? Date.now();
-    let windowReady = document.readyState === "complete";
-    let mediaReady = true;
-    let minimumTimeElapsed = false;
-    let finished = false;
-
-    const finish = () => {
-      if (finished) return;
-      finished = true;
-
-      root.classList.remove("hasu-arva-preloader");
-      root.classList.add("hasu-arva-loaded");
-      document.body.classList.remove("preloader");
-      loader.classList.add("is-exiting");
-
-      window.setTimeout(() => {
-        loader.remove();
-      }, 520);
-    };
-
-    const maybeFinish = () => {
-      if (finished) return;
-      if (windowReady && mediaReady && minimumTimeElapsed) {
-        finish();
-      }
-    };
-
-    window.setTimeout(() => {
-      minimumTimeElapsed = true;
-      maybeFinish();
-    }, 520);
-
-    window.setTimeout(finish, 1400);
-
-    if (!windowReady) {
-      window.addEventListener("load", () => {
-        windowReady = true;
-        maybeFinish();
-      }, { once: true });
-    }
-
-    const elapsed = (window.performance?.now?.() ?? Date.now()) - startedAt;
-    if (elapsed > 520) {
-      minimumTimeElapsed = true;
-      maybeFinish();
-    }
+    root.classList.remove("hasu-arva-preloader");
+    root.classList.add("hasu-arva-loaded");
+    document.body.classList.remove("preloader");
+    document.querySelectorAll(".hasu-arva-loader").forEach((loader) => loader.remove());
   }
 
   function enhanceReveal() {

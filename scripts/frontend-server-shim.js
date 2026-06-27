@@ -24,8 +24,6 @@ const clientDir = path.resolve(FRONTEND_DIR, "dist/client");
 const serverEntryUrl = new URL(`file:///${serverEntryPath.replace(/\\/g, "/")}`).href;
 const browseEffectCss = "/assets/hasumane-browse-effect.css";
 const browseEffectJs = "/assets/hasumane-browse-effect.js";
-const arvaPreloaderBoot = `<script>document.documentElement.classList.add("hasu-arva-preloader");</script>`;
-const arvaLoaderMarkup = `<div class="loader hasu-arva-loader" aria-hidden="true"><div class="hasu-arva-loader__mark"><div class="hasu-arva-loader__ring"></div><div class="hasu-arva-loader__leaf" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"></path><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"></path></svg></div><div class="hasu-arva-loader__name">HasuMane</div></div></div>`;
 const browseEffectAssets = new Map([
   [
     browseEffectCss,
@@ -144,9 +142,6 @@ function injectBrowseEffect(html) {
       .replace(/\s+fetchpriority=["']high["']/i, ""),
   );
   const headTags = [];
-  if (!optimizedHtml.includes("hasu-arva-preloader")) {
-    headTags.push(arvaPreloaderBoot);
-  }
   if (!optimizedHtml.includes(browseEffectCss)) {
     headTags.push(`<link rel="stylesheet" href="${browseEffectCss}">`);
   }
@@ -155,17 +150,13 @@ function injectBrowseEffect(html) {
     ? optimizedHtml.replace("</head>", `${headTags.join("")}</head>`)
     : `${headTags.join("")}${optimizedHtml}`;
 
-  const withLoader = withCss.includes("hasu-arva-loader")
-    ? withCss
-    : withCss.replace(/<body([^>]*)>/i, `<body$1>${arvaLoaderMarkup}`);
-
-  if (withLoader.includes(browseEffectJs)) {
-    return withLoader;
+  if (withCss.includes(browseEffectJs)) {
+    return withCss;
   }
 
-  return withLoader.includes("</body>")
-    ? withLoader.replace("</body>", `<script defer src="${browseEffectJs}"></script></body>`)
-    : `${withLoader}<script defer src="${browseEffectJs}"></script>`;
+  return withCss.includes("</body>")
+    ? withCss.replace("</body>", `<script defer src="${browseEffectJs}"></script></body>`)
+    : `${withCss}<script defer src="${browseEffectJs}"></script>`;
 }
 
 function getContentType(filePath) {
