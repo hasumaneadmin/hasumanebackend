@@ -48,6 +48,9 @@ function unwrapApiResponse(data) {
 	if (isRecord(data) && "success" in data && "data" in data) return data.data;
 	return data;
 }
+function isAuthErrorMessage(message) {
+	return /unauthorized|invalid or expired access token|missing access token|invalid token/i.test(message);
+}
 function toArray(value, key) {
 	if (Array.isArray(value)) return value;
 	if (isRecord(value)) {
@@ -1496,7 +1499,7 @@ function AdminPage({ initialRole } = {}) {
 			setData(await fetchAdminDashboard(nextToken));
 		} catch (loadError) {
 			const message = loadError instanceof Error ? loadError.message : "Admin data could not be loaded.";
-			if (/unauthorized/i.test(message)) {
+			if (isAuthErrorMessage(message)) {
 				setData(null);
 				setToken("");
 				setTokenInput("");
@@ -1617,7 +1620,15 @@ function AdminPage({ initialRole } = {}) {
 			await loadDashboard();
 			await loadInventory();
 		} catch (actionError) {
-			setError(actionError instanceof Error ? actionError.message : "The action failed.");
+			const message = actionError instanceof Error ? actionError.message : "The action failed.";
+			if (isAuthErrorMessage(message)) {
+				setData(null);
+				setToken("");
+				setTokenInput("");
+				setError("Admin session expired. Enter the admin password again.");
+				return;
+			}
+			setError(message);
 		} finally {
 			setIsBusy(false);
 		}
@@ -1806,7 +1817,7 @@ function AdminPage({ initialRole } = {}) {
 	});
 	const tabCounts = {
 		overview: 0,
-		orders: data?.orders.length ?? 0,
+		orders: (data?.orders.length ?? 0) + (data?.commerceOrders.length ?? 0),
 		leads: data?.leads.length ?? 0,
 		subscriptions: data?.subscriptions.length ?? 0,
 		products: data?.products.length ?? 0,
@@ -2363,11 +2374,19 @@ function SummaryGrid({ data }) {
 	const summary = data.summary;
 	const todayKey = toDateKey((/* @__PURE__ */ new Date()).toISOString());
 	const todayOrders = data.orders.filter((order) => toDateKey(order.deliveryDate) === todayKey);
+	const todayCustomerOrders = data.commerceOrders.filter((order) => toDateKey(order.createdAt) === todayKey && ![
+		"cancelled",
+		"refunded",
+		"rejected"
+	].includes(String(order.status).toLowerCase()));
+	const totalOrders = data.orders.length + data.commerceOrders.length;
 	const priceByProduct = new Map(data.products.map((product) => [product.productType.toLowerCase(), Number(product.price || 0)]));
-	const todaysRevenue = todayOrders.reduce((total, order) => {
+	const todaysDispatchRevenue = todayOrders.reduce((total, order) => {
 		const productType = order.subscription?.productType?.toLowerCase() || "";
 		return total + Number(order.quantity || 0) * (priceByProduct.get(productType) || 0);
 	}, 0);
+	const todaysCommerceRevenue = todayCustomerOrders.reduce((total, order) => total + Number(order.total || 0), 0);
+	const todaysRevenue = todaysDispatchRevenue + todaysCommerceRevenue;
 	const lowStockAlerts = getInventoryRows(data.products, data.subscriptions).filter((item) => item.status !== "healthy").length;
 	const newLeads = data.leads.filter((lead) => toDateKey(lead.submittedAt) === todayKey).length;
 	const pendingNotifications = data.notifications.filter((notification) => isPendingNotification(notification.status)).length;
@@ -2377,8 +2396,8 @@ function SummaryGrid({ data }) {
 			/* @__PURE__ */ jsx(StatCard, {
 				icon: ShoppingCart,
 				label: "Total orders",
-				value: summary.orders.total,
-				detail: `${data.orders.length} visible records`,
+				value: totalOrders,
+				detail: `${data.commerceOrders.length} customer / ${data.orders.length} dispatch`,
 				tone: "orders"
 			}),
 			/* @__PURE__ */ jsx(StatCard, {
@@ -2392,7 +2411,7 @@ function SummaryGrid({ data }) {
 				icon: IndianRupee,
 				label: "Today's revenue",
 				value: formatCurrency(todaysRevenue),
-				detail: `${todayOrders.length} scheduled orders`,
+				detail: `${todayCustomerOrders.length + todayOrders.length} today orders`,
 				tone: "revenue"
 			}),
 			/* @__PURE__ */ jsx(StatCard, {
@@ -3774,7 +3793,7 @@ function getRoleWorkload(role, data) {
 	};
 	if (role === "admin") return {
 		label: "Operational queue",
-		value: data.orders.length + data.leads.length,
+		value: data.orders.length + data.commerceOrders.length + data.leads.length,
 		detail: "Orders and leads in the system"
 	};
 	if (role === "manager") return {
@@ -5345,7 +5364,11 @@ function ProductsPanel({ products, categories, isBusy, onCreate, onUpdate, onDel
 	const isEditing = Boolean(editingId);
 	const categoryMap = useMemo(() => new Map(categories.map((category) => [category.id, category.name])), [categories]);
 	const alignedProducts = useMemo(() => {
-		const byKey = new Map(products.map((product) => [`${product.productType || product.name}`.toLowerCase(), product]));
+		const byKey = /* @__PURE__ */ new Map();
+		for (const product of products) {
+			byKey.set(`${product.productType || product.name}`.toLowerCase(), product);
+			byKey.set(`${product.name || product.productType}`.toLowerCase(), product);
+		}
 		return productDisplayOrder.map((productType) => {
 			return byKey.get(productType) ?? {
 				id: productType,
