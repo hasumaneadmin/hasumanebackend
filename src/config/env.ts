@@ -1,11 +1,12 @@
 import { registerAs } from "@nestjs/config";
 
 function requireEnv(name: string, fallback?: string) {
-  const value = process.env[name] || fallback;
+  const rawValue = process.env[name];
+  const value = rawValue || fallback;
   if (!value) {
     throw new Error(`${name} is required.`);
   }
-  if (process.env.NODE_ENV === "production" && fallback !== undefined && value === fallback) {
+  if (process.env.NODE_ENV === "production" && fallback !== undefined && !rawValue) {
     throw new Error(`${name} must be set in production.`);
   }
   return value;

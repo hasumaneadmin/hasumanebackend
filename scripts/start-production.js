@@ -9,6 +9,7 @@ const __dirname = path.dirname(__filename);
 const API_TARGET = "http://127.0.0.1:5001";
 const CRM_TARGET = "http://127.0.0.1:3001";
 const DEFAULT_CORS_ORIGIN = "https://crm.hasumane.com";
+const DEFAULT_ADMIN_API_TOKEN = "sujan";
 
 console.log("Starting HasuMane services from backend package...");
 
@@ -22,11 +23,15 @@ console.log(`- Frontend server: ${frontendServerJs}`);
 if (!process.env.CORS_ORIGIN) {
   console.log(`- CORS_ORIGIN not set; defaulting backend CORS to ${DEFAULT_CORS_ORIGIN}`);
 }
+if (!process.env.ADMIN_API_TOKEN) {
+  console.log("- ADMIN_API_TOKEN not set; using the bundled CRM login token.");
+}
 
 const backendEnv = {
   ...process.env,
   PORT: "5001",
   CORS_ORIGIN: process.env.CORS_ORIGIN || DEFAULT_CORS_ORIGIN,
+  ADMIN_API_TOKEN: process.env.ADMIN_API_TOKEN || DEFAULT_ADMIN_API_TOKEN,
 };
 
 // Spawn NestJS Backend on port 5001
