@@ -8,14 +8,14 @@ var tsrStartManifest = () => ({ routes: {
 			"/api/leads"
 		],
 		preloads: [
-			"/assets/index-sTWqdbWt.js",
+			"/assets/index-Crm0e98f.js",
 			"/assets/rolldown-runtime-QTnfLwEv.js",
 			"/assets/charts-DVaWO8BN.js"
 		],
 		scripts: [{ attrs: {
 			type: "module",
 			async: !0,
-			src: "/assets/index-sTWqdbWt.js"
+			src: "/assets/index-Crm0e98f.js"
 		} }]
 	},
 	"/": {
