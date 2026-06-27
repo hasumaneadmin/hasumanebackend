@@ -16,9 +16,32 @@ console.log("Starting HasuMane API and CRM proxy...");
 const backendMain = path.resolve(__dirname, "../dist/src/main.js");
 const frontendDir = path.resolve(__dirname, "../dist-frontend");
 const frontendServerShim = path.resolve(__dirname, "frontend-server-shim.js");
+const packageRoot = path.resolve(__dirname, "..");
 
 console.log(`- Backend path: ${backendMain}`);
 console.log(`- Frontend bundle: ${frontendDir}`);
+
+function runPrismaMigrations() {
+  if (process.env.SKIP_PRISMA_MIGRATE === "true") {
+    console.log("- Skipping Prisma migrations because SKIP_PRISMA_MIGRATE=true");
+    return;
+  }
+
+  console.log("- Applying Prisma migrations...");
+  const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
+  const result = cp.spawnSync(npmCommand, ["run", "prisma:migrate"], {
+    cwd: packageRoot,
+    env: process.env,
+    stdio: "inherit",
+  });
+
+  if (result.status !== 0) {
+    console.error("- Prisma migrations failed. Refusing to start with an out-of-date database.");
+    process.exit(result.status || 1);
+  }
+}
+
+runPrismaMigrations();
 
 const backendProcess = cp.spawn("node", [backendMain], {
   stdio: "inherit",
