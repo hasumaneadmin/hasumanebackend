@@ -115,22 +115,26 @@ export class OperationsService {
         },
       });
 
-      const subscription = await tx.subscription.create({
-        data: {
-          userId: user.id,
-          productType,
-          quantity,
-          scheduleType,
-          status: "pending",
-          createdBy: user.id,
-          updatedBy: user.id,
-        },
-      });
+      let subscriptionId: string | null = null;
+      if (requestType !== "order") {
+        const subscription = await tx.subscription.create({
+          data: {
+            userId: user.id,
+            productType,
+            quantity,
+            scheduleType,
+            status: "pending",
+            createdBy: user.id,
+            updatedBy: user.id,
+          },
+        });
+        subscriptionId = subscription.id;
+      }
 
       const lead = await tx.lead.create({
         data: {
           userId: user.id,
-          subscriptionId: subscription.id,
+          subscriptionId,
           name,
           phone,
           area,
@@ -206,7 +210,7 @@ export class OperationsService {
           metadata: {
             phone,
             leadId: lead.id,
-            subscriptionId: subscription.id,
+            ...(subscriptionId ? { subscriptionId } : {}),
             area,
             ...(orderId ? { orderId } : {}),
           },
@@ -849,7 +853,7 @@ export class OperationsService {
     return {
       id: lead.id,
       userId: lead.userId || "",
-      subscriptionId: lead.subscriptionId || "",
+      subscriptionId: lead.subscriptionId ?? null,
       name: lead.name,
       phone: lead.phone,
       area: lead.area,
@@ -971,7 +975,8 @@ export class OperationsService {
     if (!Number.isFinite(numberValue) || numberValue <= 0) {
       throw new BadRequestException("Quantity must be a positive number.");
     }
-    return Math.trunc(numberValue);
+    // Allow up to 2 decimal places (e.g. 0.5 litre, 250 gram)
+    return Math.round(numberValue * 100) / 100;
   }
 
   private positiveNumber(value: unknown, label: string) {

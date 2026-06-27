@@ -2,13 +2,16 @@ import cp from "child_process";
 import http from "http";
 import path from "path";
 import { fileURLToPath } from "url";
+import dotenv from "dotenv";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const API_TARGET = "http://127.0.0.1:5001";
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
+
+const API_TARGET = "http://127.0.0.1:5000";
 const CRM_TARGET = "http://127.0.0.1:3001";
-const DEFAULT_CORS_ORIGIN = "https://crm.hasumane.com";
+const DEFAULT_CORS_ORIGIN = "http://localhost:3000,http://127.0.0.1:3000";
 
 console.log("Starting HasuMane services from backend package...");
 
@@ -25,11 +28,12 @@ if (!process.env.CORS_ORIGIN) {
 
 const backendEnv = {
   ...process.env,
-  PORT: "5001",
+  NODE_ENV: "development",
+  PORT: "5000",
   CORS_ORIGIN: process.env.CORS_ORIGIN || DEFAULT_CORS_ORIGIN,
 };
 
-// Spawn NestJS Backend on port 5001
+// Spawn NestJS Backend on port 5000
 const backendProcess = cp.spawn(
   "node",
   [backendMain],
@@ -85,7 +89,7 @@ const server = http.createServer((req, res) => {
     target = CRM_TARGET;
   }
 
-  const targetPort = target === API_TARGET ? 5001 : 3001;
+  const targetPort = target === API_TARGET ? 5000 : 3001;
 
   const proxyReq = http.request(
     {
@@ -110,10 +114,13 @@ const server = http.createServer((req, res) => {
   req.pipe(proxyReq, { end: true });
 });
 
-// Proxy listens on port 3000 (standard port for the main Dokploy service container)
-const proxyPort = Number(process.env.PORT || process.env.PROXY_PORT || 3000);
+// Local preview proxy listens on 3000. Do not reuse PORT; the backend owns it.
+const proxyPort = Number(process.env.PROXY_PORT || 3000);
 server.listen(proxyPort, "0.0.0.0", () => {
   console.log(`[Proxy] Reverse proxy listening on http://0.0.0.0:${proxyPort}`);
   console.log(`[Proxy] Routing api.hasumane.com -> ${API_TARGET}`);
   console.log(`[Proxy] Routing crm.hasumane.com -> ${CRM_TARGET}`);
 });
+
+
+

@@ -54,9 +54,10 @@ async function bootstrap() {
     },
   });
 
-  await app.listen(port, "0.0.0.0");
+  await app.listen(port);
   Logger.log(`HasuMane NestJS API listening on http://localhost:${port}/api`, "Bootstrap");
   Logger.log(`Swagger docs available at http://localhost:${port}/api/docs`, "Bootstrap");
 }
 
 void bootstrap();
+

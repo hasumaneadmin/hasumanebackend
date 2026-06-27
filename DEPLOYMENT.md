@@ -4,6 +4,7 @@
 
 1. Provision PostgreSQL and Redis.
 2. Set `DATABASE_URL`, `REDIS_URL`, JWT secrets, cookie secret, and `CORS_ORIGIN`.
+   If `npm start` is used without `CORS_ORIGIN`, the bundled proxy defaults backend CORS to `https://crm.hasumane.com`.
 3. Run `npm ci`.
 4. Run `npm run prisma:generate`.
 5. Run `npm run prisma:migrate`.
@@ -14,7 +15,7 @@
 ## Security Checklist
 
 - Use 64+ character JWT secrets.
-- Set `CORS_ORIGIN` to trusted domains only.
+- Set `CORS_ORIGIN` to trusted domains only when adding domains beyond `https://crm.hasumane.com`.
 - Run behind HTTPS.
 - Keep HttpOnly token cookies enabled.
 - Send `x-csrf-token` on mutating requests.

@@ -7,6 +7,7 @@
 
 import http from "http";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -19,7 +20,30 @@ const FRONTEND_DIR = process.env.FRONTEND_DIR
   : path.resolve(__dirname, "../frontend");
 
 const serverEntryPath = path.resolve(FRONTEND_DIR, "dist/server/server.js");
+const clientDir = path.resolve(FRONTEND_DIR, "dist/client");
 const serverEntryUrl = new URL(`file:///${serverEntryPath.replace(/\\/g, "/")}`).href;
+const browseEffectCss = "/assets/hasumane-browse-effect.css";
+const browseEffectJs = "/assets/hasumane-browse-effect.js";
+const heroVideoPath = "/hasumane-video.mp4";
+const arvaPreloaderBoot = `<script>document.documentElement.classList.add("hasu-arva-preloader");</script>`;
+const arvaLoaderMarkup = `<div class="loader hasu-arva-loader" aria-hidden="true"><div class="hasu-arva-loader__mark"><div class="hasu-arva-loader__ring"></div><div class="hasu-arva-loader__leaf" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"></path><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"></path></svg></div><div class="hasu-arva-loader__name">HasuMane</div></div></div>`;
+const browseEffectAssets = new Map([
+  [
+    browseEffectCss,
+    {
+      contentType: "text/css",
+      path: path.resolve(__dirname, "hasumane-browse-effect.css"),
+    },
+  ],
+  [
+    browseEffectJs,
+    {
+      contentType: "application/javascript",
+      path: path.resolve(__dirname, "hasumane-browse-effect.js"),
+    },
+  ],
+]);
+const mediaExtensions = new Set([".mp4", ".webm", ".mov", ".m4v"]);
 
 console.log(`[Frontend Shim] Loading server entry: ${serverEntryPath}`);
 
@@ -82,10 +106,20 @@ function toWebRequest(req) {
 }
 
 async function writeWebResponse(webRes, res) {
+  const contentType = webRes.headers.get("content-type") || "";
+  const isHtml = contentType.includes("text/html");
+
   res.statusCode = webRes.status;
   webRes.headers.forEach((value, key) => {
+    if (isHtml && key.toLowerCase() === "content-length") return;
     res.setHeader(key, value);
   });
+
+  if (isHtml) {
+    const html = await webRes.text();
+    res.end(injectBrowseEffect(html));
+    return;
+  }
 
   if (webRes.body) {
     const reader = webRes.body.getReader();
@@ -99,8 +133,151 @@ async function writeWebResponse(webRes, res) {
   res.end();
 }
 
+function injectBrowseEffect(html) {
+  const cleanedHtml = html.replace(
+    /<meta\s+(?:name|property)=["'](?:twitter:image|og:image)["']\s+content=["']\/hero-cattle\.jpeg["']\s*\/?>/gi,
+    "",
+  );
+  const headTags = [];
+  if (!cleanedHtml.includes("hasu-arva-preloader")) {
+    headTags.push(arvaPreloaderBoot);
+  }
+  if (!cleanedHtml.includes(`href="${heroVideoPath}"`)) {
+    headTags.push(`<link rel="preload" as="video" href="${heroVideoPath}" type="video/mp4" fetchpriority="high">`);
+  }
+  if (!cleanedHtml.includes(browseEffectCss)) {
+    headTags.push(`<link rel="stylesheet" href="${browseEffectCss}">`);
+  }
+
+  const withCss = cleanedHtml.includes("</head>")
+    ? cleanedHtml.replace("</head>", `${headTags.join("")}</head>`)
+    : `${headTags.join("")}${cleanedHtml}`;
+
+  const withLoader = withCss.includes("hasu-arva-loader")
+    ? withCss
+    : withCss.replace(/<body([^>]*)>/i, `<body$1>${arvaLoaderMarkup}`);
+
+  if (withLoader.includes(browseEffectJs)) {
+    return withLoader;
+  }
+
+  return withLoader.includes("</body>")
+    ? withLoader.replace("</body>", `<script defer src="${browseEffectJs}"></script></body>`)
+    : `${withLoader}<script defer src="${browseEffectJs}"></script>`;
+}
+
+function getContentType(filePath) {
+  if (filePath.endsWith(".js")) return "application/javascript";
+  if (filePath.endsWith(".css")) return "text/css";
+  if (filePath.endsWith(".html")) return "text/html";
+  if (filePath.endsWith(".png")) return "image/png";
+  if (filePath.endsWith(".jpeg") || filePath.endsWith(".jpg")) return "image/jpeg";
+  if (filePath.endsWith(".svg")) return "image/svg+xml";
+  if (filePath.endsWith(".mp4")) return "video/mp4";
+  if (filePath.endsWith(".webm")) return "video/webm";
+  if (filePath.endsWith(".json")) return "application/json";
+  if (filePath.endsWith(".txt")) return "text/plain";
+  if (filePath.endsWith(".xml")) return "application/xml";
+  return "application/octet-stream";
+}
+
+function serveStaticFile(req, res, filePath, contentType, cacheControl = "public, max-age=31536000") {
+  const stat = fs.statSync(filePath);
+  const total = stat.size;
+  const ext = path.extname(filePath).toLowerCase();
+  const supportsRange = mediaExtensions.has(ext);
+  const baseHeaders = {
+    "Content-Type": contentType,
+    "Cache-Control": cacheControl,
+    "Accept-Ranges": supportsRange ? "bytes" : "none",
+  };
+
+  if (supportsRange && req.headers.range) {
+    const match = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range);
+    if (!match) {
+      res.writeHead(416, {
+        ...baseHeaders,
+        "Content-Range": `bytes */${total}`,
+      });
+      res.end();
+      return;
+    }
+
+    let start = match[1] === "" ? 0 : Number(match[1]);
+    let end = match[2] === "" ? total - 1 : Number(match[2]);
+
+    if (match[1] === "" && match[2] !== "") {
+      const suffixLength = Number(match[2]);
+      start = Math.max(total - suffixLength, 0);
+      end = total - 1;
+    }
+
+    if (!Number.isFinite(start) || !Number.isFinite(end) || start > end || start >= total) {
+      res.writeHead(416, {
+        ...baseHeaders,
+        "Content-Range": `bytes */${total}`,
+      });
+      res.end();
+      return;
+    }
+
+    end = Math.min(end, total - 1);
+    const chunkSize = end - start + 1;
+    res.writeHead(206, {
+      ...baseHeaders,
+      "Content-Length": chunkSize,
+      "Content-Range": `bytes ${start}-${end}/${total}`,
+    });
+
+    if (req.method === "HEAD") {
+      res.end();
+      return;
+    }
+
+    fs.createReadStream(filePath, { start, end }).pipe(res);
+    return;
+  }
+
+  res.writeHead(200, {
+    ...baseHeaders,
+    "Content-Length": total,
+  });
+
+  if (req.method === "HEAD") {
+    res.end();
+    return;
+  }
+
+  fs.createReadStream(filePath).pipe(res);
+}
+
 const server = http.createServer(async (req, res) => {
   try {
+    if (req.method === "GET" || req.method === "HEAD") {
+      try {
+        const pathname = new URL(req.url, `http://${req.headers.host}`).pathname;
+        const browseAsset = browseEffectAssets.get(pathname);
+        if (browseAsset) {
+          serveStaticFile(req, res, browseAsset.path, browseAsset.contentType, "no-cache");
+          return;
+        }
+
+        if (pathname !== "/") { // Let SSR handle the root document
+          const filePath = path.join(clientDir, pathname);
+          // Prevent directory traversal
+          if (filePath.startsWith(clientDir)) {
+            const stat = fs.statSync(filePath);
+            if (stat.isFile()) {
+              serveStaticFile(req, res, filePath, getContentType(filePath));
+              return;
+            }
+          }
+        }
+      } catch (e) {
+        // file not found or other error, fallback to SSR handler
+      }
+    }
+
     const webReq = await toWebRequest(req);
     const webRes = await fetchHandler(webReq, {}, {});
     await writeWebResponse(webRes, res);
