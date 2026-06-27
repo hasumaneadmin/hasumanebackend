@@ -1,0 +1,131 @@
+import { ConfigService } from "@nestjs/config";
+import { PaginationQueryDto } from "../../common/dto/pagination-query.dto.js";
+import { PrismaService } from "../../prisma/prisma.service.js";
+import { AuditLogService } from "../audit/audit-log.service.js";
+import type { CreateUserDto } from "./dto/create-user.dto.js";
+import type { UpdateUserDto } from "./dto/update-user.dto.js";
+export declare class UsersService {
+    private readonly prisma;
+    private readonly configService;
+    private readonly auditLogService;
+    constructor(prisma: PrismaService, configService: ConfigService, auditLogService: AuditLogService);
+    findAll(query: PaginationQueryDto): Promise<{
+        data: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            name: string;
+            email: string | null;
+            role: string;
+            phone: string;
+            emailVerifiedAt: Date | null;
+            twoFactorEnabled: boolean;
+            isBlocked: boolean;
+            lastLoginAt: Date | null;
+        }[];
+        meta: import("../../common/utils/pagination.js").PaginationMeta;
+    }>;
+    findOne(id: string): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        name: string;
+        email: string | null;
+        role: string;
+        phone: string;
+        emailVerifiedAt: Date | null;
+        twoFactorEnabled: boolean;
+        isBlocked: boolean;
+        lastLoginAt: Date | null;
+        addresses: {
+            id: string;
+            userId: string;
+            createdAt: Date;
+            updatedAt: Date;
+            deletedAt: Date | null;
+            createdBy: string | null;
+            updatedBy: string | null;
+            isActive: boolean;
+            streetAddress: string;
+            pincode: string;
+            latitude: import("@prisma/client/runtime/library").Decimal;
+            longitude: import("@prisma/client/runtime/library").Decimal;
+        }[];
+        sessions: {
+            id: string;
+            ipAddress: string | null;
+            userAgent: string | null;
+            expiresAt: Date;
+            createdAt: Date;
+        }[];
+    }>;
+    create(dto: CreateUserDto, actorId?: string): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        name: string;
+        email: string | null;
+        role: string;
+        phone: string;
+        emailVerifiedAt: Date | null;
+        twoFactorEnabled: boolean;
+        isBlocked: boolean;
+        lastLoginAt: Date | null;
+    }>;
+    update(id: string, dto: UpdateUserDto, actorId?: string): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        name: string;
+        email: string | null;
+        role: string;
+        phone: string;
+        emailVerifiedAt: Date | null;
+        twoFactorEnabled: boolean;
+        isBlocked: boolean;
+        lastLoginAt: Date | null;
+    }>;
+    block(id: string, actorId?: string): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        name: string;
+        email: string | null;
+        role: string;
+        phone: string;
+        emailVerifiedAt: Date | null;
+        twoFactorEnabled: boolean;
+        isBlocked: boolean;
+        lastLoginAt: Date | null;
+    }>;
+    unblock(id: string, actorId?: string): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        name: string;
+        email: string | null;
+        role: string;
+        phone: string;
+        emailVerifiedAt: Date | null;
+        twoFactorEnabled: boolean;
+        isBlocked: boolean;
+        lastLoginAt: Date | null;
+    }>;
+    remove(id: string, actorId?: string): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        name: string;
+        email: string | null;
+        role: string;
+        phone: string;
+        emailVerifiedAt: Date | null;
+        twoFactorEnabled: boolean;
+        isBlocked: boolean;
+        lastLoginAt: Date | null;
+    }>;
+    private ensureExists;
+    private get hashRounds();
+    private get safeUserSelect();
+    private safeUser;
+}

@@ -1,0 +1,1 @@
+import{m as e,n as t,p as n,r,t as i}from"./index-sTWqdbWt.js";var a=e();function o(){let{role:e}=i.useParams(),o=r(e);return o?(0,a.jsx)(t,{initialRole:o.role}):(0,a.jsx)(n,{to:`/admin`,replace:!0})}export{o as component};
