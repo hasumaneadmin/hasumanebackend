@@ -24,6 +24,7 @@ const clientDir = path.resolve(FRONTEND_DIR, "dist/client");
 const serverEntryUrl = new URL(`file:///${serverEntryPath.replace(/\\/g, "/")}`).href;
 const browseEffectCss = "/assets/hasumane-browse-effect.css";
 const browseEffectJs = "/assets/hasumane-browse-effect.js";
+const criticalVisibilityStyle = `<style id="hasu-critical-visibility">.hero-kicker,.hero-title,.hero-cta,.hasu-arva-scroll{opacity:1!important;visibility:visible!important;transform:none!important}.hero-video{opacity:1!important;visibility:visible!important}html,body{min-height:100%;background:#f1efdf}</style>`;
 const browseEffectAssets = new Map([
   [
     browseEffectCss,
@@ -111,6 +112,12 @@ async function writeWebResponse(webRes, res) {
     if (isHtml && key.toLowerCase() === "content-length") return;
     res.setHeader(key, value);
   });
+  if (isHtml) {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+    res.setHeader("Surrogate-Control", "no-store");
+  }
 
   if (isHtml) {
     const html = await webRes.text();
@@ -144,6 +151,9 @@ function injectBrowseEffect(html) {
   const headTags = [];
   if (!optimizedHtml.includes(browseEffectCss)) {
     headTags.push(`<link rel="stylesheet" href="${browseEffectCss}">`);
+  }
+  if (!optimizedHtml.includes("hasu-critical-visibility")) {
+    headTags.push(criticalVisibilityStyle);
   }
 
   const withCss = optimizedHtml.includes("</head>")
