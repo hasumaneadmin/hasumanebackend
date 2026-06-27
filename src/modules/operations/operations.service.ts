@@ -67,8 +67,9 @@ export class OperationsService {
     const name = this.requiredString(payload, "name", "Name");
     const phone = this.requiredString(payload, "phone", "Phone");
     const area = this.requiredString(payload, "area", "Area");
-    const productType = this.normalizeSlug(
-      this.stringValue(payload.product ?? payload.productType, "milk"),
+    const requestedProduct = this.stringValue(
+      payload.productType ?? payload.product ?? payload.productCode ?? payload.productId,
+      "milk",
     );
     const quantity = this.positiveQuantity(payload.quantity, 1);
     const scheduleType = this.normalizeSchedule(
@@ -81,6 +82,9 @@ export class OperationsService {
     const requestType = this.stringValue(payload.requestType, "subscription");
 
     const result = await this.prisma.$transaction(async (tx) => {
+      const product = await this.resolveLeadProduct(tx, payload, requestedProduct);
+      const productType = product?.productType || this.normalizeSlug(requestedProduct);
+
       const existingUser = await tx.user.findFirst({
         where: { phone, deletedAt: null },
       });
@@ -148,9 +152,6 @@ export class OperationsService {
         },
       });
 
-      const product = await tx.product.findFirst({
-        where: { productType, deletedAt: null },
-      });
       const unitPrice = product?.price ? Number(product.price) : 0;
       const subtotal = unitPrice * quantity;
 
@@ -833,6 +834,50 @@ export class OperationsService {
       return this.toJsonInput(this.jsonSafe((metadata as Record<string, unknown>)[key]));
     }
     return undefined;
+  }
+
+  private async resolveLeadProduct(
+    tx: Prisma.TransactionClient,
+    payload: JsonRecord,
+    fallbackProduct: string,
+  ) {
+    const lookups: Prisma.ProductWhereInput[] = [];
+    const seen = new Set<string>();
+    const addLookup = (key: string, where: Prisma.ProductWhereInput) => {
+      if (seen.has(key)) return;
+      seen.add(key);
+      lookups.push(where);
+    };
+    const addTextLookups = (value: string | undefined) => {
+      if (!value) return;
+      addLookup(`code:${value.toLowerCase()}`, { code: value });
+      addLookup(`name:${value.toLowerCase()}`, { name: { equals: value, mode: "insensitive" } });
+
+      const normalized = this.normalizeSlug(value);
+      if (normalized) {
+        addLookup(`type:${normalized}`, {
+          productType: { equals: normalized, mode: "insensitive" },
+        });
+      }
+    };
+
+    const productId = this.optionalString(payload.productId);
+    if (productId) addLookup(`id:${productId}`, { id: productId });
+
+    addTextLookups(this.optionalString(payload.productCode));
+    addTextLookups(this.optionalString(payload.productName));
+    addTextLookups(this.optionalString(payload.product));
+    addTextLookups(this.optionalString(payload.productType));
+    addTextLookups(fallbackProduct);
+
+    if (!lookups.length) return null;
+
+    return tx.product.findFirst({
+      where: {
+        deletedAt: null,
+        OR: lookups,
+      },
+    });
   }
 
   private toClientLead(lead: {

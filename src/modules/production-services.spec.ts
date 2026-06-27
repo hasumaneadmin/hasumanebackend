@@ -41,6 +41,7 @@ const buildPrisma = () => {
     emailVerificationToken: {},
     loginHistory: {},
     passwordResetToken: {},
+    address: {},
     product: {},
     productCategory: {},
     productVariant: {},
@@ -401,6 +402,62 @@ describe("OperationsService subscription lifecycle", () => {
     expect(result.subscription.id).toBe("subscription-1");
     expect(prisma.auditLog.create).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ module: "subscriptions" }) }),
+    );
+  });
+
+  it("stores public lead submissions with the CRM product type when a website product code is submitted", async () => {
+    prisma.user.findFirst = jest.fn().mockResolvedValue(null);
+    prisma.user.create = jest.fn().mockResolvedValue({ id: "user-1" });
+    prisma.user.update = jest.fn().mockResolvedValue({ id: "user-1" });
+    prisma.address.create = jest.fn().mockResolvedValue({ id: "address-1" });
+    prisma.product.findFirst = jest.fn().mockResolvedValue({
+      id: "product-1",
+      code: "ML-01",
+      name: "Milk",
+      productType: "liquid",
+      price: 60,
+    });
+    prisma.subscription.create.mockResolvedValue({ id: "subscription-1" });
+    prisma.lead.create = jest.fn().mockImplementation(({ data }) =>
+      Promise.resolve({
+        id: "lead-1",
+        submittedAt: new Date("2026-01-01T00:00:00.000Z"),
+        status: "new",
+        ...data,
+      }),
+    );
+    prisma.notification.create = jest.fn().mockResolvedValue({ id: "notification-1" });
+
+    const result = await service.captureLead(
+      {
+        name: "Codex Lead",
+        phone: "+919999999999",
+        area: "Indiranagar",
+        product: "ML-01",
+        quantity: 1,
+        requestType: "subscription",
+      },
+      requestContext(),
+    );
+
+    expect(result.id).toBe("lead-1");
+    expect(prisma.product.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          deletedAt: null,
+          OR: expect.arrayContaining([expect.objectContaining({ code: "ML-01" })]),
+        }),
+      }),
+    );
+    expect(prisma.subscription.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ productType: "liquid" }),
+      }),
+    );
+    expect(prisma.lead.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ productType: "liquid" }),
+      }),
     );
   });
 
