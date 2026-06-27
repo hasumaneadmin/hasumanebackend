@@ -10,7 +10,7 @@ const __dirname = path.dirname(__filename);
 
 const API_TARGET = "http://127.0.0.1:5001";
 const CRM_TARGET = "http://127.0.0.1:3001";
-const PUBLIC_API_TARGET = process.env.PUBLIC_API_TARGET || "https://api.hasumane.com";
+const WEBSITE_API_TARGET = process.env.WEBSITE_API_TARGET || API_TARGET;
 const DEFAULT_CORS_ORIGIN = "https://crm.hasumane.com";
 const DEFAULT_ADMIN_API_TOKEN = "sujan";
 const DEFAULT_SECRET_SEED = process.env.ADMIN_API_TOKEN || DEFAULT_ADMIN_API_TOKEN;
@@ -94,7 +94,7 @@ const frontendProcess = cp.spawn(
       PORT: "3001",
       HOST: "127.0.0.1",
       FRONTEND_DIR: frontendDir,
-      BACKEND_API_URL: process.env.BACKEND_API_URL || PUBLIC_API_TARGET,
+      BACKEND_API_URL: process.env.BACKEND_API_URL || API_TARGET,
     },
   }
 );
@@ -126,7 +126,7 @@ const server = http.createServer((req, res) => {
   if (host.includes("api.hasumane.com")) {
     target = API_TARGET;
   } else if (isBackendApiPath) {
-    target = PUBLIC_API_TARGET;
+    target = WEBSITE_API_TARGET;
   } else if (host.includes("crm.hasumane.com")) {
     // If accessing the root path of the CRM subdomain, redirect to the admin panel
     if (requestPath === "/" || requestPath === "") {
@@ -172,6 +172,6 @@ const proxyPort = Number(process.env.PORT || process.env.PROXY_PORT || 3000);
 server.listen(proxyPort, "0.0.0.0", () => {
   console.log(`[Proxy] Reverse proxy listening on http://0.0.0.0:${proxyPort}`);
   console.log(`[Proxy] Routing api.hasumane.com -> ${API_TARGET}`);
-  console.log(`[Proxy] Routing public API paths -> ${PUBLIC_API_TARGET}`);
+  console.log(`[Proxy] Routing public API paths -> ${WEBSITE_API_TARGET}`);
   console.log(`[Proxy] Routing crm.hasumane.com -> ${CRM_TARGET}`);
 });

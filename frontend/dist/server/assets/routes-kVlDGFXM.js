@@ -172,10 +172,11 @@ function getProductIcon(product) {
 }
 function mapProductToSiteProduct(product, index) {
 	const unit = normalizeProductOrderUnit(product);
+	const productCode = product.code || product.id || product.name || product.productType || `product-${index + 1}`;
 	return {
-		code: product.code,
-		name: product.name,
-		value: product.productType || product.code || product.name,
+		code: productCode,
+		name: product.name || product.code || `Product ${index + 1}`,
+		value: productCode,
 		bgColor: productCardTones[index % productCardTones.length],
 		icon: getProductIcon(product),
 		unit,
@@ -219,7 +220,7 @@ function Index() {
 	const [selectedProduct, setSelectedProduct] = useState(fallbackProducts[0]?.value ?? "milk");
 	const [requestType, setRequestType] = useState("subscription");
 	const videoRef = useRef(null);
-	const productOptionsKey = siteProducts.map((product) => product.value).join("|");
+	const productOptionsKey = siteProducts.map((product) => `${product.value}:${product.name}`).join("|");
 	const selectedProductUnit = siteProducts.find((product) => product.value === selectedProduct)?.unit ?? "litre";
 	useEffect(() => {
 		if (videoRef.current) {
@@ -271,7 +272,7 @@ function Index() {
 	useEffect(() => {
 		let isMounted = true;
 		const controller = new AbortController();
-		const timeoutId = window.setTimeout(() => controller.abort(), 2500);
+		const timeoutId = window.setTimeout(() => controller.abort(), 8000);
 		async function loadProducts() {
 			try {
 				const response = await fetch(`${API_URL}/api/v1/products`, {

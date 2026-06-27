@@ -70,7 +70,7 @@
     const video = document.querySelector(".hero-video");
     const startedAt = window.performance?.now?.() ?? Date.now();
     let windowReady = document.readyState === "complete";
-    let mediaReady = !(video instanceof HTMLVideoElement) || video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA;
+    let mediaReady = true;
     let minimumTimeElapsed = false;
     let finished = false;
 
@@ -98,9 +98,9 @@
     window.setTimeout(() => {
       minimumTimeElapsed = true;
       maybeFinish();
-    }, 950);
+    }, 520);
 
-    window.setTimeout(finish, 2600);
+    window.setTimeout(finish, 1400);
 
     if (!windowReady) {
       window.addEventListener("load", () => {
@@ -109,18 +109,8 @@
       }, { once: true });
     }
 
-    if (video instanceof HTMLVideoElement && !mediaReady) {
-      const markMediaReady = () => {
-        mediaReady = true;
-        maybeFinish();
-      };
-
-      video.addEventListener("loadeddata", markMediaReady, { once: true });
-      video.addEventListener("canplay", markMediaReady, { once: true });
-    }
-
     const elapsed = (window.performance?.now?.() ?? Date.now()) - startedAt;
-    if (elapsed > 950) {
+    if (elapsed > 520) {
       minimumTimeElapsed = true;
       maybeFinish();
     }
@@ -209,10 +199,10 @@
     const video = document.querySelector(".hero-video");
     if (!(video instanceof HTMLVideoElement)) return;
 
-    video.preload = "auto";
+    video.preload = "metadata";
     video.muted = true;
     video.playsInline = true;
-    video.setAttribute("fetchpriority", "high");
+    video.setAttribute("fetchpriority", "low");
     video.setAttribute("webkit-playsinline", "");
 
     const play = () => {
@@ -224,11 +214,7 @@
       }
     };
 
-    if (video.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) {
-      video.load();
-    }
-
-    play();
+    window.requestAnimationFrame(play);
 
     const retry = () => {
       play();
