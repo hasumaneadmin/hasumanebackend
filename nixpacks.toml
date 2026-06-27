@@ -1,0 +1,11 @@
+[variables]
+NIXPACKS_NODE_VERSION = "22"
+
+[phases.install]
+cmds = ["npm install --include=dev"]
+
+[phases.build]
+cmds = ["npx prisma generate"]
+
+[start]
+cmd = "npm run start"
