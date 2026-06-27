@@ -50,6 +50,7 @@ const frontendProcess = cp.spawn(
       PORT: "3001",
       HOST: "127.0.0.1",
       FRONTEND_DIR: frontendDir,
+      BACKEND_API_URL: process.env.BACKEND_API_URL || API_TARGET,
     },
   }
 );
@@ -72,12 +73,17 @@ process.on("SIGTERM", killChildren);
 const server = http.createServer((req, res) => {
   const host = req.headers.host || "";
   let target = CRM_TARGET;
+  const requestPath = req.url || "/";
+  const isBackendApiPath =
+    requestPath.startsWith("/api/v1") ||
+    requestPath.startsWith("/docs") ||
+    requestPath.startsWith("/metrics");
 
-  if (host.includes("api.hasumane.com")) {
+  if (host.includes("api.hasumane.com") || isBackendApiPath) {
     target = API_TARGET;
   } else if (host.includes("crm.hasumane.com")) {
     // If accessing the root path of the CRM subdomain, redirect to the admin panel
-    if (req.url === "/" || req.url === "") {
+    if (requestPath === "/" || requestPath === "") {
       res.writeHead(302, { Location: "/admin" });
       res.end();
       return;

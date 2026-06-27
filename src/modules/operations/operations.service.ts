@@ -70,7 +70,7 @@ export class OperationsService {
     const productType = this.normalizeSlug(
       this.stringValue(payload.product ?? payload.productType, "milk"),
     );
-    const quantity = this.positiveInt(payload.quantity, 1);
+    const quantity = this.positiveQuantity(payload.quantity, 1);
     const scheduleType = this.normalizeSchedule(
       this.stringValue(payload.plan ?? payload.scheduleType, "daily"),
     );
@@ -468,7 +468,7 @@ export class OperationsService {
       data: {
         userId,
         productType,
-        quantity: this.positiveInt(payload.quantity, 1),
+        quantity: this.positiveQuantity(payload.quantity, 1),
         scheduleType: this.normalizeSchedule(this.stringValue(payload.scheduleType, "daily")),
         status: this.stringValue(payload.status, "active"),
         createdBy: actorId,
@@ -843,7 +843,7 @@ export class OperationsService {
     phone: string;
     area: string;
     productType: string;
-    quantity: number;
+    quantity: Prisma.Decimal | number;
     scheduleType: string;
     notes: string | null;
     source: string | null;
@@ -858,7 +858,7 @@ export class OperationsService {
       phone: lead.phone,
       area: lead.area,
       productType: lead.productType,
-      quantity: lead.quantity,
+      quantity: Number(lead.quantity),
       scheduleType: lead.scheduleType,
       notes: lead.notes || "",
       source: lead.source || "website",
@@ -970,7 +970,7 @@ export class OperationsService {
     return fallback;
   }
 
-  private positiveInt(value: unknown, fallback: number) {
+  private positiveQuantity(value: unknown, fallback: number) {
     const numberValue = Number(value ?? fallback);
     if (!Number.isFinite(numberValue) || numberValue <= 0) {
       throw new BadRequestException("Quantity must be a positive number.");

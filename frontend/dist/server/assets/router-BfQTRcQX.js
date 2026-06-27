@@ -317,7 +317,7 @@ async function saveLeadSubmission(data, request) {
 		area: data.area
 	};
 	console.info("New HasuMane lead submission", logPayload);
-	const backendUrl = (process.env.BACKEND_API_URL || "http://localhost:5000").replace(/\/$/, "");
+	const backendUrl = (process.env.BACKEND_API_URL || "http://127.0.0.1:5001").replace(/\/$/, "");
 	try {
 		const response = await fetch(`${backendUrl}/api/v1/leads`, {
 			method: "POST",

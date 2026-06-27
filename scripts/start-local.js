@@ -55,6 +55,7 @@ const frontendProcess = cp.spawn(
       PORT: "3001",
       HOST: "127.0.0.1",
       FRONTEND_DIR: frontendDir,
+      BACKEND_API_URL: process.env.BACKEND_API_URL || API_TARGET,
     },
   }
 );
@@ -78,11 +79,15 @@ const server = http.createServer((req, res) => {
   const host = req.headers.host || "";
   let target = CRM_TARGET;
 
-  const isApiPath = req.url?.startsWith("/api") || req.url?.startsWith("/docs");
+  const requestPath = req.url || "/";
+  const isApiPath =
+    requestPath.startsWith("/api/v1") ||
+    requestPath.startsWith("/docs") ||
+    requestPath.startsWith("/metrics");
 
   if (host.includes("api.hasumane.com") || isApiPath) {
     target = API_TARGET;
-  } else if (req.url === "/" || req.url === "") {
+  } else if (requestPath === "/" || requestPath === "") {
     res.writeHead(302, { Location: "/admin" });
     res.end();
     return;

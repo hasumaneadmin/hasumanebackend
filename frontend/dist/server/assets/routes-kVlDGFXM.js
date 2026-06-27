@@ -9,7 +9,7 @@ var sujan_png_asset_default = { url: "/sujan-portrait.jpg" };
 //#endregion
 //#region src/routes/index.tsx?tsr-split=component
 var HERO_VIDEO_SRC = "/hasumane-video.mp4";
-var API_URL = "http://localhost:5000".replace(/\/$/, "");
+var API_URL = "".replace(/\/$/, "");
 var MARQUEE = [
 	"Now Delivering Fresh, Daily, Across Bengaluru",
 	"Chemical-Free, Always",

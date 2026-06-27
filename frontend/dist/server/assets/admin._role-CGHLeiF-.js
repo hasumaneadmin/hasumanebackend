@@ -4,7 +4,7 @@ import { Fragment, jsx, jsxs } from "react/jsx-runtime";
 import { Area, AreaChart, CartesianGrid, Cell, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Activity, BadgePercent, BarChart3, Bell, CalendarDays, Check, ChevronLeft, ChevronRight, CircleHelp, ClipboardList, CreditCard, Database, Eye, EyeOff, Headphones, Image, IndianRupee, KeyRound, Leaf, LogOut, Milk, PackageCheck, Pencil, Plus, RefreshCcw, Search, Send, Settings, Shield, ShieldCheck, ShoppingCart, Sprout, Store, Tags, Trash2, Truck, UserCog, UserPlus, Users, Warehouse, X } from "lucide-react";
 //#region src/lib/admin-api.ts
-var API_BASE_URL = "http://localhost:5000".replace(/\/$/, "");
+var API_BASE_URL = "".replace(/\/$/, "");
 var API_PATH_PREFIX = "/api/v1";
 var ADMIN_CSRF_STORAGE_KEY = "hasumane-admin-csrf";
 var ADMIN_ACCESS_STORAGE_KEY = "hasumane-admin-access-token";

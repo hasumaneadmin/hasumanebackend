@@ -160,7 +160,7 @@ model Subscription {
   userId       String       @map("user_id")
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   productType  String       @map("product_type") // e.g. whole_milk, curd, ghee
-  quantity     Int
+  quantity     Decimal      @default(1)
   scheduleType String       @map("schedule_type") // daily | alternate | custom
   customDays   Json?        @map("custom_days") // e.g. ["Mon","Wed","Fri"]
   status       String       @default("active") // active | paused | terminated
@@ -184,7 +184,7 @@ model Lead {
   phone          String
   area           String
   productType    String   @map("product_type")
-  quantity       Int
+  quantity       Decimal  @default(1)
   scheduleType   String   @map("schedule_type")
   notes          String?
   source         String?
@@ -862,7 +862,7 @@ model DailyOrder {
   subscriptionId String       @map("subscription_id")
   subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
   deliveryDate   DateTime     @map("delivery_date")
-  quantity       Int
+  quantity       Decimal      @default(1)
   status         String       @default("pending") // pending | delivered | failed
   riderId        String?      @map("rider_id")
   deliveredAt    DateTime?    @map("delivered_at")

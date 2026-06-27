@@ -1,0 +1,11 @@
+ALTER TABLE "subscriptions"
+  ALTER COLUMN "quantity" TYPE DECIMAL(65,30) USING "quantity"::DECIMAL,
+  ALTER COLUMN "quantity" SET DEFAULT 1;
+
+ALTER TABLE "leads"
+  ALTER COLUMN "quantity" TYPE DECIMAL(65,30) USING "quantity"::DECIMAL,
+  ALTER COLUMN "quantity" SET DEFAULT 1;
+
+ALTER TABLE "daily_orders"
+  ALTER COLUMN "quantity" TYPE DECIMAL(65,30) USING "quantity"::DECIMAL,
+  ALTER COLUMN "quantity" SET DEFAULT 1;
