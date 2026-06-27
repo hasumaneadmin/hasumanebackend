@@ -1,4 +1,5 @@
 import cp from "child_process";
+import crypto from "crypto";
 import http from "http";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -10,6 +11,11 @@ const API_TARGET = "http://127.0.0.1:5001";
 const CRM_TARGET = "http://127.0.0.1:3001";
 const DEFAULT_CORS_ORIGIN = "https://crm.hasumane.com";
 const DEFAULT_ADMIN_API_TOKEN = "sujan";
+const DEFAULT_SECRET_SEED = process.env.ADMIN_API_TOKEN || DEFAULT_ADMIN_API_TOKEN;
+
+function derivedSecret(name) {
+  return crypto.createHash("sha256").update(`hasumane:${name}:${DEFAULT_SECRET_SEED}`).digest("hex");
+}
 
 console.log("Starting HasuMane services from backend package...");
 
@@ -26,12 +32,18 @@ if (!process.env.CORS_ORIGIN) {
 if (!process.env.ADMIN_API_TOKEN) {
   console.log("- ADMIN_API_TOKEN not set; using the bundled CRM login token.");
 }
+if (!process.env.JWT_ACCESS_SECRET || !process.env.JWT_REFRESH_SECRET || !process.env.COOKIE_SECRET) {
+  console.log("- Auth secrets not fully set; deriving runtime defaults for backend startup.");
+}
 
 const backendEnv = {
   ...process.env,
   PORT: "5001",
   CORS_ORIGIN: process.env.CORS_ORIGIN || DEFAULT_CORS_ORIGIN,
   ADMIN_API_TOKEN: process.env.ADMIN_API_TOKEN || DEFAULT_ADMIN_API_TOKEN,
+  JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET || derivedSecret("jwt-access"),
+  JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET || derivedSecret("jwt-refresh"),
+  COOKIE_SECRET: process.env.COOKIE_SECRET || derivedSecret("cookie"),
 };
 
 // Spawn NestJS Backend on port 5001
