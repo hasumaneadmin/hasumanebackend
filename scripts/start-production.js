@@ -10,7 +10,8 @@ const __dirname = path.dirname(__filename);
 
 const API_TARGET = "http://127.0.0.1:5001";
 const CRM_TARGET = "http://127.0.0.1:3001";
-const WEBSITE_API_TARGET = process.env.WEBSITE_API_TARGET || API_TARGET;
+const PUBLIC_API_TARGET = process.env.PUBLIC_API_TARGET || "https://api.hasumane.com";
+const WEBSITE_API_TARGET = process.env.WEBSITE_API_TARGET || PUBLIC_API_TARGET;
 const DEFAULT_CORS_ORIGIN = "https://crm.hasumane.com";
 const DEFAULT_ADMIN_API_TOKEN = "sujan";
 const DEFAULT_SECRET_SEED = process.env.ADMIN_API_TOKEN || DEFAULT_ADMIN_API_TOKEN;
@@ -94,7 +95,7 @@ const frontendProcess = cp.spawn(
       PORT: "3001",
       HOST: "127.0.0.1",
       FRONTEND_DIR: frontendDir,
-      BACKEND_API_URL: process.env.BACKEND_API_URL || API_TARGET,
+      BACKEND_API_URL: process.env.BACKEND_API_URL || WEBSITE_API_TARGET,
     },
   }
 );
