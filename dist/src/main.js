@@ -45,6 +45,17 @@ async function bootstrap() {
             persistAuthorization: true,
         },
     });
+    const expressApp = app.getHttpAdapter().getInstance();
+    expressApp.get("/", (_request, response) => {
+        response.json({
+            service: "hasumane-api",
+            status: "ok",
+            message: "HasuMane backend is running.",
+            docs: "/api/docs",
+            health: "/api/v1/health/live",
+            checkedAt: new Date().toISOString(),
+        });
+    });
     await app.listen(port, "0.0.0.0");
     Logger.log(`HasuMane NestJS API listening on http://localhost:${port}/api`, "Bootstrap");
     Logger.log(`Swagger docs available at http://localhost:${port}/api/docs`, "Bootstrap");
