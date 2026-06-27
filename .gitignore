@@ -7,6 +7,7 @@ dist-ssr/
 .env.production
 .data/
 backend/
+.dev-logs/
 
 # OS/IDE
 .DS_Store
