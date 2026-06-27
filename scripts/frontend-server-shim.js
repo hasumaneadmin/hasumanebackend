@@ -24,7 +24,9 @@ const clientDir = path.resolve(FRONTEND_DIR, "dist/client");
 const serverEntryUrl = new URL(`file:///${serverEntryPath.replace(/\\/g, "/")}`).href;
 const browseEffectCss = "/assets/hasumane-browse-effect.css";
 const browseEffectJs = "/assets/hasumane-browse-effect.js";
+const noCacheMetaTags = `<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">`;
 const criticalVisibilityStyle = `<style id="hasu-critical-visibility">.hero-kicker,.hero-title,.hero-cta,.hasu-arva-scroll{opacity:1!important;visibility:visible!important;transform:none!important}.hero-video{opacity:1!important;visibility:visible!important}html,body{min-height:100%;background:#f1efdf}</style>`;
+const blankScreenGuard = `<script id="hasu-blank-screen-guard">(()=>{const reveal=()=>{document.documentElement.classList.remove("hasu-arva-preloader");document.documentElement.classList.add("hasu-arva-loaded");document.body?.classList.remove("preloader");document.querySelectorAll(".hasu-arva-loader").forEach((el)=>el.remove());document.querySelectorAll(".hero-kicker,.hero-title,.hero-cta,.hasu-arva-scroll,.hero-video").forEach((el)=>{el.style.opacity="1";el.style.visibility="visible";el.style.transform="none";});};const recover=()=>{reveal();const visibleText=(document.body?.innerText||"").trim();const hasHero=!!document.querySelector(".hero-title");if((visibleText.length<80||!hasHero)&&!sessionStorage.getItem("hasu-render-retry")){sessionStorage.setItem("hasu-render-retry","1");const url=new URL(location.href);url.searchParams.set("renderRetry",Date.now().toString());location.replace(url.toString());}};window.addEventListener("pageshow",recover);document.addEventListener("DOMContentLoaded",recover,{once:true});setTimeout(recover,1200);setTimeout(recover,3500);})();</script>`;
 const browseEffectAssets = new Map([
   [
     browseEffectCss,
@@ -149,11 +151,17 @@ function injectBrowseEffect(html) {
       .replace(/\s+fetchpriority=["']high["']/i, ""),
   );
   const headTags = [];
+  if (!optimizedHtml.includes('http-equiv="Cache-Control"')) {
+    headTags.push(noCacheMetaTags);
+  }
   if (!optimizedHtml.includes(browseEffectCss)) {
     headTags.push(`<link rel="stylesheet" href="${browseEffectCss}">`);
   }
   if (!optimizedHtml.includes("hasu-critical-visibility")) {
     headTags.push(criticalVisibilityStyle);
+  }
+  if (!optimizedHtml.includes("hasu-blank-screen-guard")) {
+    headTags.push(blankScreenGuard);
   }
 
   const withCss = optimizedHtml.includes("</head>")
