@@ -9,9 +9,10 @@ const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
-const API_TARGET = "http://127.0.0.1:5000";
+const API_TARGET = "http://127.0.0.1:5001";
 const CRM_TARGET = "http://127.0.0.1:3001";
-const DEFAULT_CORS_ORIGIN = "http://localhost:3000,http://127.0.0.1:3000";
+const DEFAULT_CORS_ORIGIN =
+  "http://localhost:5000,http://127.0.0.1:5000,http://localhost:3000,http://127.0.0.1:3000";
 
 console.log("Starting HasuMane services from backend package...");
 
@@ -29,11 +30,11 @@ if (!process.env.CORS_ORIGIN) {
 const backendEnv = {
   ...process.env,
   NODE_ENV: "development",
-  PORT: "5000",
+  PORT: "5001",
   CORS_ORIGIN: process.env.CORS_ORIGIN || DEFAULT_CORS_ORIGIN,
 };
 
-// Spawn NestJS Backend on port 5000
+// Spawn NestJS Backend behind the preview proxy.
 const backendProcess = cp.spawn(
   "node",
   [backendMain],
@@ -77,19 +78,19 @@ const server = http.createServer((req, res) => {
   const host = req.headers.host || "";
   let target = CRM_TARGET;
 
-  if (host.includes("api.hasumane.com")) {
+  const isApiPath = req.url?.startsWith("/api") || req.url?.startsWith("/docs");
+
+  if (host.includes("api.hasumane.com") || isApiPath) {
     target = API_TARGET;
+  } else if (req.url === "/" || req.url === "") {
+    res.writeHead(302, { Location: "/admin" });
+    res.end();
+    return;
   } else if (host.includes("crm.hasumane.com")) {
-    // If accessing the root path of the CRM subdomain, redirect to the admin panel
-    if (req.url === "/" || req.url === "") {
-      res.writeHead(302, { Location: "/admin" });
-      res.end();
-      return;
-    }
     target = CRM_TARGET;
   }
 
-  const targetPort = target === API_TARGET ? 5000 : 3001;
+  const targetPort = target === API_TARGET ? 5001 : 3001;
 
   const proxyReq = http.request(
     {
@@ -114,8 +115,8 @@ const server = http.createServer((req, res) => {
   req.pipe(proxyReq, { end: true });
 });
 
-// Local preview proxy listens on 3000. Do not reuse PORT; the backend owns it.
-const proxyPort = Number(process.env.PROXY_PORT || 3000);
+// Local preview proxy listens on 5000 so the app preview opens the CRM, not the API.
+const proxyPort = Number(process.env.PROXY_PORT || 5000);
 server.listen(proxyPort, "0.0.0.0", () => {
   console.log(`[Proxy] Reverse proxy listening on http://0.0.0.0:${proxyPort}`);
   console.log(`[Proxy] Routing api.hasumane.com -> ${API_TARGET}`);
