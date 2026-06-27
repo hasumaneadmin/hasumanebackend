@@ -9,6 +9,7 @@ const __dirname = path.dirname(__filename);
 const API_TARGET_PORT = Number(process.env.API_TARGET_PORT || 5001);
 const CRM_TARGET_PORT = Number(process.env.CRM_TARGET_PORT || 3001);
 const DEFAULT_CORS_ORIGIN = "https://crm.hasumane.com";
+const DEFAULT_ADMIN_PATH = process.env.CRM_DEFAULT_PATH || "/admin/super-admin";
 
 console.log("Starting HasuMane API and CRM proxy...");
 
@@ -72,6 +73,17 @@ function proxyTo(req, res, targetPort) {
   req.pipe(proxyReq, { end: true });
 }
 
+function getFrontendRedirect(req) {
+  const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
+  const pathname = url.pathname.replace(/\/+$/, "") || "/";
+
+  if (pathname === "/" || pathname === "/admin") {
+    return `${DEFAULT_ADMIN_PATH}${url.search}`;
+  }
+
+  return null;
+}
+
 const server = http.createServer((req, res) => {
   const host = req.headers.host || "";
   const isApiHost = host.includes("api.hasumane.com");
@@ -82,8 +94,9 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  if (req.url === "/" || req.url === "") {
-    res.writeHead(302, { Location: "/admin" });
+  const frontendRedirect = getFrontendRedirect(req);
+  if (frontendRedirect) {
+    res.writeHead(302, { Location: frontendRedirect });
     res.end();
     return;
   }

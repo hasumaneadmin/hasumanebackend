@@ -17,6 +17,7 @@ const indexHtmlPath = path.resolve(clientDir, "index.html");
 const mediaExtensions = new Set([".mp4", ".webm", ".mov", ".m4v"]);
 const buildTimeApiBaseUrl = "http://localhost:5000";
 const publicApiBaseUrl = (process.env.PUBLIC_API_BASE_URL || "").replace(/\/$/, "");
+const DEFAULT_ADMIN_PATH = process.env.CRM_DEFAULT_PATH || "/admin/super-admin";
 
 console.log(`[Frontend Static] Serving client bundle: ${clientDir}`);
 
@@ -143,6 +144,17 @@ function resolveClientFile(urlPathname) {
   }
 }
 
+function getFrontendRedirect(req) {
+  const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
+  const pathname = url.pathname.replace(/\/+$/, "") || "/";
+
+  if (pathname === "/" || pathname === "/admin") {
+    return `${DEFAULT_ADMIN_PATH}${url.search}`;
+  }
+
+  return null;
+}
+
 const server = http.createServer((req, res) => {
   if (!["GET", "HEAD"].includes(req.method || "GET")) {
     res.writeHead(405, { "Content-Type": "text/plain" });
@@ -151,6 +163,13 @@ const server = http.createServer((req, res) => {
   }
 
   try {
+    const frontendRedirect = getFrontendRedirect(req);
+    if (frontendRedirect) {
+      res.writeHead(302, { Location: frontendRedirect });
+      res.end();
+      return;
+    }
+
     const pathname = new URL(req.url || "/", `http://${req.headers.host}`).pathname;
     const filePath = resolveClientFile(pathname);
 
