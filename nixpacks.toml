@@ -9,6 +9,6 @@ cmds = ["npm install"]
 cmds = ["npx prisma generate", "npm run build"]
 
 [start]
-cmd = "npm run prisma:migrate || echo 'Prisma migration failed; continuing startup'; node scripts/start-production.js"
+cmd = "node scripts/start-production.js"
 
 

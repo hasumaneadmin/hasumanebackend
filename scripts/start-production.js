@@ -12,6 +12,13 @@ const CRM_TARGET = "http://127.0.0.1:3001";
 const DEFAULT_CORS_ORIGIN = "https://crm.hasumane.com";
 const DEFAULT_ADMIN_API_TOKEN = "sujan";
 const DEFAULT_SECRET_SEED = process.env.ADMIN_API_TOKEN || DEFAULT_ADMIN_API_TOKEN;
+const DATABASE_URL =
+  process.env.DATABASE_URL ||
+  process.env.POSTGRES_URL ||
+  process.env.POSTGRESQL_URL ||
+  process.env.POSTGRES_PRISMA_URL ||
+  process.env.DATABASE_PRIVATE_URL ||
+  process.env.NEON_DATABASE_URL;
 
 function derivedSecret(name) {
   return crypto.createHash("sha256").update(`hasumane:${name}:${DEFAULT_SECRET_SEED}`).digest("hex");
@@ -35,16 +42,34 @@ if (!process.env.ADMIN_API_TOKEN) {
 if (!process.env.JWT_ACCESS_SECRET || !process.env.JWT_REFRESH_SECRET || !process.env.COOKIE_SECRET) {
   console.log("- Auth secrets not fully set; deriving runtime defaults for backend startup.");
 }
+if (!process.env.DATABASE_URL && DATABASE_URL) {
+  console.log("- DATABASE_URL not set; using an available Postgres URL alias.");
+}
 
 const backendEnv = {
   ...process.env,
   PORT: "5001",
+  ...(DATABASE_URL ? { DATABASE_URL } : {}),
   CORS_ORIGIN: process.env.CORS_ORIGIN || DEFAULT_CORS_ORIGIN,
   ADMIN_API_TOKEN: process.env.ADMIN_API_TOKEN || DEFAULT_ADMIN_API_TOKEN,
   JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET || derivedSecret("jwt-access"),
   JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET || derivedSecret("jwt-refresh"),
   COOKIE_SECRET: process.env.COOKIE_SECRET || derivedSecret("cookie"),
 };
+
+function runMigrations() {
+  const npx = process.platform === "win32" ? "npx.cmd" : "npx";
+  console.log("- Running Prisma migrations before backend startup...");
+  const result = cp.spawnSync(npx, ["prisma", "migrate", "deploy"], {
+    stdio: "inherit",
+    env: backendEnv,
+  });
+  if (result.status !== 0) {
+    console.log("- Prisma migration failed; continuing backend startup.");
+  }
+}
+
+runMigrations();
 
 // Spawn NestJS Backend on port 5001
 const backendProcess = cp.spawn(
