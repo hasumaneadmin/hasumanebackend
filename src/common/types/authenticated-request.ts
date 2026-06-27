@@ -18,4 +18,5 @@ export type AuthenticatedRequest = Request & {
   user?: AuthenticatedUser;
   context?: RequestContext;
   cookies?: Record<string, string>;
+  signedCookies?: Record<string, string>;
 };

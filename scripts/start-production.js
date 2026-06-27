@@ -12,10 +12,12 @@ const CRM_TARGET = "http://127.0.0.1:3001";
 console.log("Starting HasuMane services from backend package...");
 
 const backendMain = path.resolve(__dirname, "../dist/src/main.js");
-const frontendDir = path.resolve(__dirname, "../dist-frontend");
+const frontendDir = path.resolve(__dirname, "../frontend");
+const frontendServerJs = path.resolve(frontendDir, "dist/server/server.js");
 
 console.log(`- Backend path: ${backendMain}`);
 console.log(`- Frontend path: ${frontendDir}`);
+console.log(`- Frontend server: ${frontendServerJs}`);
 
 // Spawn NestJS Backend on port 5001
 const backendProcess = cp.spawn(
@@ -27,16 +29,18 @@ const backendProcess = cp.spawn(
   }
 );
 
-// Spawn TanStack Start Frontend on port 3001
-const isWin = process.platform === "win32";
+// Spawn the SSR frontend shim on port 3001
 const frontendProcess = cp.spawn(
-  isWin ? "npm.cmd" : "npm",
-  ["run", "start", "--", "--port", "3001", "--host", "0.0.0.0"],
+  "node",
+  [path.resolve(__dirname, "frontend-server-shim.js")],
   {
-    cwd: frontendDir,
     stdio: "inherit",
-    env: { ...process.env, PORT: "3001" },
-    shell: isWin,
+    env: {
+      ...process.env,
+      PORT: "3001",
+      HOST: "127.0.0.1",
+      FRONTEND_DIR: frontendDir,
+    },
   }
 );
 
@@ -97,7 +101,7 @@ const server = http.createServer((req, res) => {
 });
 
 // Proxy listens on port 3000 (standard port for the main Dokploy service container)
-const proxyPort = process.env.PROXY_PORT || 3000;
+const proxyPort = Number(process.env.PORT || process.env.PROXY_PORT || 3000);
 server.listen(proxyPort, "0.0.0.0", () => {
   console.log(`[Proxy] Reverse proxy listening on http://0.0.0.0:${proxyPort}`);
   console.log(`[Proxy] Routing api.hasumane.com -> ${API_TARGET}`);

@@ -52,9 +52,11 @@ export class AdminSessionController {
     @Req() request: AuthenticatedRequest,
     @Res({ passthrough: true }) res: Response,
   ) {
-    res.clearCookie("access_token");
-    res.clearCookie("refresh_token");
-    res.clearCookie("csrf_token");
+    const secure = process.env.NODE_ENV === "production";
+    const clearOptions = { path: "/", secure, sameSite: "lax" as const };
+    res.clearCookie("access_token", clearOptions);
+    res.clearCookie("refresh_token", clearOptions);
+    res.clearCookie("csrf_token", clearOptions);
     await this.authService.logout(user.sessionId, request);
     return { authenticated: false };
   }
@@ -65,8 +67,10 @@ export class AdminSessionController {
   ) {
     const secure = process.env.NODE_ENV === "production";
     const cookieOptions = {
+      path: "/",
       secure,
       sameSite: "lax" as const,
+      signed: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     };
 

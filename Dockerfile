@@ -1,7 +1,7 @@
 FROM node:22-alpine AS deps
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci
+RUN npm install
 
 FROM deps AS build
 COPY prisma ./prisma
@@ -17,15 +17,12 @@ WORKDIR /app
 
 # Copy NestJS production dependencies and built server
 COPY package*.json ./
-RUN npm ci --omit=dev
+RUN npm install --omit=dev
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/prisma ./prisma
 COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=build /app/scripts ./scripts
-
-# Copy pre-compiled frontend package and install its dependencies
-COPY dist-frontend ./dist-frontend
-RUN cd dist-frontend && npm install
+COPY frontend/dist ./frontend/dist
 
 EXPOSE 3000
 CMD ["node", "scripts/start-production.js"]

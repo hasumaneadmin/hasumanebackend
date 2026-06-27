@@ -2,10 +2,13 @@
 [variables]
 NIXPACKS_NODE_VERSION = "22"
 
+[phases.install]
+cmds = ["npm install"]
+
 [phases.build]
-cmds = ["npx prisma generate", "npm run build", "cd dist-frontend && npm install --include=dev"]
+cmds = ["npx prisma generate", "npm run build"]
 
 [start]
-cmd = "npm run start"
+cmd = "node scripts/start-production.js"
 
 
