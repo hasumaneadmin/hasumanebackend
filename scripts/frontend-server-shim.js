@@ -185,6 +185,83 @@ const previewProducts = [
     sortOrder: 5,
   },
 ];
+const previewCategoryId = "preview-category-dairy-essentials";
+const previewCategories = [
+  {
+    id: previewCategoryId,
+    name: "Dairy Essentials",
+    slug: "dairy-essentials",
+    description: "Core fresh dairy products for daily consumption and pantry use.",
+    imageUrl: null,
+    isActive: true,
+    sortOrder: 0,
+    createdAt: "2026-06-29T00:00:00.000Z",
+    updatedAt: "2026-06-29T00:00:00.000Z",
+    deletedAt: null,
+    createdBy: "preview-admin",
+    updatedBy: "preview-admin",
+  },
+];
+const previewUsers = [
+  {
+    id: "preview-admin",
+    name: "HasuMane Admin",
+    phone: "+910000000000",
+    email: "admin@hasumane.local",
+    role: "super_admin",
+    isBlocked: false,
+    createdAt: "2026-06-29T00:00:00.000Z",
+    updatedAt: "2026-06-29T00:00:00.000Z",
+    deletedAt: null,
+  },
+];
+const previewAdminSession = {
+  authenticated: true,
+  accessToken: "preview-admin-access-token",
+  csrfToken: "preview-admin-csrf-token",
+  expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+  role: "super_admin",
+};
+let previewAdminProducts = previewProducts.map((product) => toAdminProduct(product));
+let previewInventoryItems = previewAdminProducts.map((product) => toInventoryItem(product));
+let previewLeads = [];
+
+function toAdminProduct(product) {
+  const now = new Date().toISOString();
+  return {
+    ...product,
+    categoryId: product.categoryId ?? previewCategoryId,
+    category: previewCategories[0],
+    variants: product.variants ?? [],
+    images: product.images ?? [],
+    inventoryItems: product.inventoryItems ?? [],
+    createdAt: product.createdAt ?? now,
+    updatedAt: product.updatedAt ?? now,
+    deletedAt: product.deletedAt ?? null,
+    createdBy: product.createdBy ?? "preview-admin",
+    updatedBy: product.updatedBy ?? "preview-admin",
+  };
+}
+
+function toInventoryItem(product) {
+  return {
+    id: `preview-stock-${product.productType}`,
+    productId: product.id,
+    variantId: null,
+    sku: product.code,
+    product,
+    variant: null,
+    currentStock: product.unit === "litre" ? 120 : 80,
+    reservedStock: 0,
+    reorderLevel: product.unit === "litre" ? 20 : 10,
+    unit: product.unit,
+    warehouseName: "Preview cold room",
+    status: "in_stock",
+    createdAt: product.createdAt,
+    updatedAt: product.updatedAt,
+    deletedAt: null,
+  };
+}
 
 console.log(`[Frontend Shim] Loading server entry: ${serverEntryPath}`);
 
@@ -465,44 +542,361 @@ function readRequestJson(req) {
   });
 }
 
+function normalizePreviewApiPath(pathname) {
+  if (pathname.startsWith("/api/v1/")) return pathname.slice("/api/v1".length);
+  if (pathname === "/api/v1") return "/";
+  if (pathname.startsWith("/api/")) return pathname.slice("/api".length);
+  if (pathname === "/api") return "/";
+  return pathname;
+}
+
+function getPreviewPagination(requestUrl, total) {
+  const page = Math.max(1, Number(requestUrl.searchParams.get("page") || "1") || 1);
+  const limit = Math.min(200, Math.max(1, Number(requestUrl.searchParams.get("limit") || String(total || 20)) || 20));
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  return {
+    page,
+    limit,
+    total,
+    totalPages,
+    hasNextPage: page < totalPages,
+    hasPreviousPage: page > 1,
+  };
+}
+
+function paginatePreview(items, requestUrl) {
+  const search = (requestUrl.searchParams.get("search") || "").trim().toLowerCase();
+  const filtered = search
+    ? items.filter((item) => {
+        const haystack = [item.name, item.code, item.productType, item.slug, item.description]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return haystack.includes(search);
+      })
+    : items;
+  const meta = getPreviewPagination(requestUrl, filtered.length);
+  const start = (meta.page - 1) * meta.limit;
+  return {
+    items: filtered.slice(start, start + meta.limit),
+    meta,
+  };
+}
+
+function productListPayload(requestUrl) {
+  const activeProducts = previewAdminProducts
+    .filter((product) => product.deletedAt == null)
+    .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.name.localeCompare(b.name));
+  const { items, meta } = paginatePreview(activeProducts, requestUrl);
+  return {
+    success: true,
+    message: "Products fetched.",
+    data: items,
+    products: items,
+    meta,
+  };
+}
+
+function categoryListPayload(requestUrl) {
+  const { items, meta } = paginatePreview(previewCategories, requestUrl);
+  return {
+    success: true,
+    message: "Categories fetched.",
+    data: items,
+    categories: items,
+    meta,
+  };
+}
+
+function inventoryPayload() {
+  return {
+    success: true,
+    message: "Inventory fetched.",
+    items: previewInventoryItems,
+    data: previewInventoryItems,
+  };
+}
+
+function previewSummaryPayload() {
+  const activeProducts = previewAdminProducts.filter((product) => product.deletedAt == null && product.isActive);
+  return {
+    summary: {
+      dashboard: {
+        totalRevenue: 0,
+        totalOrders: 0,
+        activeProducts: activeProducts.length,
+        inventoryAlerts: 0,
+      },
+      products: {
+        total: previewAdminProducts.filter((product) => product.deletedAt == null).length,
+        active: activeProducts.length,
+        priced: activeProducts.filter((product) => product.price != null).length,
+      },
+      leads: {
+        total: previewLeads.length,
+        pending: previewLeads.filter((lead) => lead.status === "new").length,
+      },
+      subscriptions: {
+        total: 0,
+        byStatus: {
+          pending: 0,
+          active: 0,
+          paused: 0,
+          terminated: 0,
+        },
+      },
+      orders: {
+        total: 0,
+        pending: 0,
+      },
+    },
+  };
+}
+
+function createPreviewProduct(input) {
+  const now = new Date().toISOString();
+  const productType = String(input.productType || input.name || "product")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "") || `product-${Date.now()}`;
+  const product = toAdminProduct({
+    id: `preview-${productType}-${randomUUID()}`,
+    code: String(input.code || productType.toUpperCase()).trim(),
+    name: String(input.name || input.code || "New Product").trim(),
+    productType,
+    categoryId: input.categoryId || previewCategoryId,
+    unit: input.unit || "unit",
+    price: input.price ?? null,
+    compareAtPrice: input.compareAtPrice ?? null,
+    taxPercent: input.taxPercent ?? 0,
+    defaultQuantity: input.defaultQuantity ?? 1,
+    defaultSchedule: input.defaultSchedule || "daily",
+    description: input.description || "",
+    tags: Array.isArray(input.tags) ? input.tags : [],
+    isActive: input.isActive ?? true,
+    active: input.isActive ?? true,
+    sortOrder: input.sortOrder ?? previewAdminProducts.length,
+    createdAt: now,
+    updatedAt: now,
+  });
+  previewAdminProducts = [...previewAdminProducts, product];
+  previewInventoryItems = previewAdminProducts.map((item) => toInventoryItem(item));
+  return product;
+}
+
+function updatePreviewProduct(id, input) {
+  let updatedProduct = null;
+  previewAdminProducts = previewAdminProducts.map((product) => {
+    if (product.id !== id) return product;
+    updatedProduct = toAdminProduct({
+      ...product,
+      ...input,
+      id: product.id,
+      code: input.code ?? product.code,
+      productType: input.productType ?? product.productType,
+      categoryId: input.categoryId ?? product.categoryId ?? previewCategoryId,
+      active: input.isActive ?? product.isActive,
+      updatedAt: new Date().toISOString(),
+    });
+    return updatedProduct;
+  });
+  if (!updatedProduct) return null;
+  previewInventoryItems = previewAdminProducts
+    .filter((product) => product.deletedAt == null)
+    .map((product) => toInventoryItem(product));
+  return updatedProduct;
+}
+
+function archivePreviewProduct(id) {
+  return updatePreviewProduct(id, {
+    isActive: false,
+    active: false,
+    deletedAt: new Date().toISOString(),
+  });
+}
+
 const server = http.createServer(async (req, res) => {
   try {
     const requestUrl = new URL(req.url, `http://${req.headers.host}`);
     const pathname = requestUrl.pathname;
+    const apiPath = normalizePreviewApiPath(pathname);
+
+    if (apiPath === "/admin/session") {
+      if (req.method === "POST") {
+        const payload = await readRequestJson(req);
+        const expectedPassword = process.env.ADMIN_API_TOKEN || "sujan";
+        if (payload.password && payload.password !== expectedPassword) {
+          writeJsonResponse(req, res, 401, {
+            message: "Invalid admin token.",
+          });
+          return;
+        }
+        writeJsonResponse(req, res, 200, previewAdminSession);
+        return;
+      }
+
+      if (req.method === "GET" || req.method === "HEAD") {
+        writeJsonResponse(req, res, 200, {
+          authenticated: true,
+          role: "super_admin",
+        });
+        return;
+      }
+
+      if (req.method === "DELETE") {
+        writeJsonResponse(req, res, 200, {
+          authenticated: false,
+        });
+        return;
+      }
+    }
 
     if (
       (req.method === "GET" || req.method === "HEAD") &&
-      (pathname === "/api/v1/products" || pathname === "/api/products")
+      (apiPath === "/products" || apiPath === "/admin/products")
     ) {
+      writeJsonResponse(req, res, 200, productListPayload(requestUrl));
+      return;
+    }
+
+    if (apiPath === "/admin/products" && req.method === "POST") {
+      const product = createPreviewProduct(await readRequestJson(req));
+      writeJsonResponse(req, res, 201, {
+        success: true,
+        message: "Product created.",
+        data: product,
+        product,
+      });
+      return;
+    }
+
+    const adminProductMatch = /^\/admin\/products\/([^/]+)$/.exec(apiPath);
+    if (adminProductMatch && (req.method === "PUT" || req.method === "PATCH")) {
+      const product = updatePreviewProduct(adminProductMatch[1], await readRequestJson(req));
+      if (!product) {
+        writeJsonResponse(req, res, 404, { message: "Product not found." });
+        return;
+      }
       writeJsonResponse(req, res, 200, {
         success: true,
-        message: "Products fetched.",
-        data: previewProducts,
-        products: previewProducts,
-        meta: {
-          page: 1,
-          limit: previewProducts.length,
-          total: previewProducts.length,
-          totalPages: 1,
-        },
+        message: "Product updated.",
+        data: product,
+        product,
       });
+      return;
+    }
+
+    if (adminProductMatch && req.method === "DELETE") {
+      const product = archivePreviewProduct(adminProductMatch[1]);
+      if (!product) {
+        writeJsonResponse(req, res, 404, { message: "Product not found." });
+        return;
+      }
+      writeJsonResponse(req, res, 200, {
+        success: true,
+        message: "Product archived.",
+        data: product,
+        product,
+      });
+      return;
+    }
+
+    if ((req.method === "GET" || req.method === "HEAD") && apiPath === "/categories") {
+      writeJsonResponse(req, res, 200, categoryListPayload(requestUrl));
+      return;
+    }
+
+    if ((req.method === "GET" || req.method === "HEAD") && apiPath === "/admin/summary") {
+      writeJsonResponse(req, res, 200, previewSummaryPayload());
+      return;
+    }
+
+    if ((req.method === "GET" || req.method === "HEAD") && apiPath === "/users") {
+      writeJsonResponse(req, res, 200, { users: previewUsers, data: previewUsers });
+      return;
+    }
+
+    if ((req.method === "GET" || req.method === "HEAD") && apiPath === "/admin/leads") {
+      writeJsonResponse(req, res, 200, { leads: previewLeads });
+      return;
+    }
+
+    if ((req.method === "GET" || req.method === "HEAD") && apiPath === "/subscriptions") {
+      writeJsonResponse(req, res, 200, { subscriptions: [] });
+      return;
+    }
+
+    if ((req.method === "GET" || req.method === "HEAD") && (apiPath === "/dispatch/orders" || apiPath === "/admin/orders")) {
+      writeJsonResponse(req, res, 200, { orders: [] });
+      return;
+    }
+
+    if ((req.method === "GET" || req.method === "HEAD") && apiPath === "/farmers") {
+      writeJsonResponse(req, res, 200, { farmers: [] });
+      return;
+    }
+
+    if ((req.method === "GET" || req.method === "HEAD") && apiPath === "/procurement/logs") {
+      writeJsonResponse(req, res, 200, { logs: [] });
+      return;
+    }
+
+    if ((req.method === "GET" || req.method === "HEAD") && apiPath === "/notifications") {
+      writeJsonResponse(req, res, 200, { notifications: [] });
+      return;
+    }
+
+    if ((req.method === "GET" || req.method === "HEAD") && apiPath === "/inventory") {
+      writeJsonResponse(req, res, 200, inventoryPayload());
+      return;
+    }
+
+    if ((req.method === "GET" || req.method === "HEAD") && apiPath === "/security/audit-logs") {
+      writeJsonResponse(req, res, 200, { auditLogs: [] });
+      return;
+    }
+
+    if ((req.method === "GET" || req.method === "HEAD") && apiPath === "/security/login-history") {
+      writeJsonResponse(req, res, 200, { logins: [] });
+      return;
+    }
+
+    if ((req.method === "GET" || req.method === "HEAD") && apiPath === "/settings") {
+      writeJsonResponse(req, res, 200, { settings: [] });
+      return;
+    }
+
+    if ((req.method === "GET" || req.method === "HEAD") && apiPath === "/roles/permissions") {
+      writeJsonResponse(req, res, 200, { permissions: [] });
       return;
     }
 
     if (
       req.method === "POST" &&
-      (pathname === "/api/leads" || pathname === "/api/v1/leads" || pathname === "/api/v1/subscriptions/public")
+      (apiPath === "/leads" || apiPath === "/subscriptions/public")
     ) {
       const payload = await readRequestJson(req);
+      const lead = {
+        id: `preview-${randomUUID()}`,
+        name: payload.name || "Preview Lead",
+        phone: payload.phone || "",
+        area: payload.area || "",
+        productType: payload.productType || payload.product || "milk",
+        quantity: payload.quantity || 1,
+        scheduleType: payload.scheduleType || payload.plan || "daily",
+        notes: payload.notes || "",
+        source: payload.source || "website",
+        status: "new",
+        submittedAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      previewLeads = [lead, ...previewLeads];
       writeJsonResponse(req, res, 201, {
         success: true,
         message: "Thanks. We received your request. Our team will confirm the details on WhatsApp.",
-        lead: {
-          id: `preview-${randomUUID()}`,
-          ...payload,
-          status: "new",
-          submittedAt: new Date().toISOString(),
-        },
+        lead,
       });
       return;
     }
