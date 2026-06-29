@@ -1,6 +1,12 @@
 # Node
 node_modules/
 dist/
+!frontend/dist/
+frontend/dist/*
+!frontend/dist/client/
+frontend/dist/client/*
+!frontend/dist/client/favicon.svg
+!frontend/dist/client/site.webmanifest
 dist-ssr/
 *.log
 .env

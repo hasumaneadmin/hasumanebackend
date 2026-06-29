@@ -8,6 +8,7 @@
 import http from "http";
 import path from "path";
 import fs from "fs";
+import { randomUUID } from "crypto";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -24,9 +25,24 @@ const clientDir = path.resolve(FRONTEND_DIR, "dist/client");
 const serverEntryUrl = new URL(`file:///${serverEntryPath.replace(/\\/g, "/")}`).href;
 const browseEffectCss = "/assets/hasumane-browse-effect.css";
 const browseEffectJs = "/assets/hasumane-browse-effect.js";
+const assetVersion = "20260629-pro-logo";
+const faviconSvg = "/favicon.svg";
+const faviconIco = "/favicon.ico";
+const webManifest = "/site.webmanifest";
+const faviconSvgHref = `${faviconSvg}?v=${assetVersion}`;
+const webManifestHref = `${webManifest}?v=${assetVersion}`;
+const heroVideo = "/hasumane-video.mp4";
 const noCacheMetaTags = `<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">`;
-const criticalVisibilityStyle = `<style id="hasu-critical-visibility">.hero-kicker,.hero-title,.hero-cta,.hasu-arva-scroll{opacity:1!important;visibility:visible!important;transform:none!important}.hero-video{opacity:1!important;visibility:visible!important}html,body{min-height:100%;background:#f1efdf}</style>`;
-const blankScreenGuard = `<script id="hasu-blank-screen-guard">(()=>{const reveal=()=>{document.documentElement.classList.remove("hasu-arva-preloader");document.documentElement.classList.add("hasu-arva-loaded");document.body?.classList.remove("preloader");document.querySelectorAll(".hasu-arva-loader").forEach((el)=>el.remove());document.querySelectorAll(".hero-kicker,.hero-title,.hero-cta,.hasu-arva-scroll,.hero-video").forEach((el)=>{el.style.opacity="1";el.style.visibility="visible";el.style.transform="none";});};const recover=()=>{reveal();const visibleText=(document.body?.innerText||"").trim();const hasHero=!!document.querySelector(".hero-title");if((visibleText.length<80||!hasHero)&&!sessionStorage.getItem("hasu-render-retry")){sessionStorage.setItem("hasu-render-retry","1");const url=new URL(location.href);url.searchParams.set("renderRetry",Date.now().toString());location.replace(url.toString());}};window.addEventListener("pageshow",recover);document.addEventListener("DOMContentLoaded",recover,{once:true});setTimeout(recover,1200);setTimeout(recover,3500);})();</script>`;
+const brandHeadTags = [
+  `<link rel="icon" type="image/svg+xml" href="${faviconSvgHref}">`,
+  `<link rel="shortcut icon" href="${faviconSvgHref}">`,
+  `<link rel="manifest" href="${webManifestHref}">`,
+  `<meta name="theme-color" content="#07503f">`,
+  `<link rel="preload" as="video" href="${heroVideo}" type="video/mp4" fetchpriority="high">`,
+].join("");
+const openingLoaderMarkup = `<div class="hasu-opening-loader" role="status" aria-live="polite" aria-label="Loading HasuMane"><div class="hasu-opening-loader__content"><img class="hasu-opening-loader__mark" src="${faviconSvgHref}" alt="" aria-hidden="true"><div class="hasu-opening-loader__brand">HasuMane</div><div class="hasu-opening-loader__line" aria-hidden="true"><span></span></div></div></div>`;
+const criticalVisibilityStyle = `<style id="hasu-critical-visibility">:root{--hasu-hero-fallback:#f1efdf;--hasu-logo-loader:url("${faviconSvgHref}")}.hero-kicker,.hero-title,.hero-cta,.hasu-arva-scroll{opacity:1!important;visibility:visible!important;transform:none!important}html,body{min-height:100%;background:#f1efdf}.hero-video{background:#f1efdf!important;visibility:visible!important;transition:opacity .24s ease}html:not(.hasu-video-ready) .hero-video{opacity:0!important}html.hasu-video-ready .hero-video{opacity:1!important}html:not(.hasu-video-ready) .hero-video+div,div:has(>.hero-video){background:#f1efdf!important}.hasu-opening-loader{position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;background:#f1efdf;color:#07503f;transition:opacity .46s cubic-bezier(.215,.61,.355,1),visibility .46s cubic-bezier(.215,.61,.355,1);pointer-events:auto}.hasu-opening-loader__content{display:grid;justify-items:center;gap:14px;transform:translateY(-10px)}.hasu-opening-loader__mark{width:76px;height:76px;border-radius:18px;box-shadow:0 18px 38px rgba(7,80,63,.14);animation:hasu-opening-mark 1.35s cubic-bezier(.55,.05,.2,1) infinite}.hasu-opening-loader__brand{font-family:Georgia,"Times New Roman",serif;font-size:clamp(34px,5.6vw,62px);font-weight:500;letter-spacing:0;line-height:1;text-shadow:0 14px 34px rgba(7,80,63,.12)}.hasu-opening-loader__line{width:min(180px,42vw);height:3px;overflow:hidden;border-radius:999px;background:rgba(7,80,63,.14)}.hasu-opening-loader__line span{display:block;width:46%;height:100%;border-radius:inherit;background:#07503f;animation:hasu-opening-line 1.15s cubic-bezier(.65,.05,.36,1) infinite}html.hasu-opening-loaded .hasu-opening-loader{opacity:0;visibility:hidden;pointer-events:none}@keyframes hasu-opening-mark{0%,100%{transform:translateY(0);filter:drop-shadow(0 16px 28px rgba(7,80,63,.1))}50%{transform:translateY(-5px);filter:drop-shadow(0 22px 38px rgba(7,80,63,.18))}}@keyframes hasu-opening-line{0%{transform:translateX(-105%)}52%{transform:translateX(70%)}100%{transform:translateX(225%)}}</style>`;
+const blankScreenGuard = `<script id="hasu-blank-screen-guard">(()=>{const show=(el)=>{el.style.opacity="1";el.style.visibility="visible";el.style.transform="none";};const reveal=()=>{document.documentElement.classList.remove("hasu-arva-preloader");document.documentElement.classList.add("hasu-arva-loaded");document.body?.classList.remove("preloader");document.querySelectorAll(".hasu-arva-loader").forEach((el)=>el.remove());document.querySelectorAll(".hero-kicker,.hero-title,.hero-cta,.hasu-arva-scroll").forEach(show);};const revealSections=()=>document.querySelectorAll(".scroll-fade-in,#products").forEach((el)=>{el.classList.add("scroll-fade-in-visible");show(el);});const recover=()=>{reveal();const visibleText=(document.body?.innerText||"").trim();const hasHero=!!document.querySelector(".hero-title");if((visibleText.length<80||!hasHero)&&!sessionStorage.getItem("hasu-render-retry")){sessionStorage.setItem("hasu-render-retry","1");const url=new URL(location.href);url.searchParams.set("renderRetry",Date.now().toString());location.replace(url.toString());}};window.addEventListener("pageshow",recover);document.addEventListener("DOMContentLoaded",recover,{once:true});setTimeout(recover,1200);setTimeout(()=>{recover();revealSections();},3500);})();</script>`;
 const browseEffectAssets = new Map([
   [
     browseEffectCss,
@@ -42,8 +58,133 @@ const browseEffectAssets = new Map([
       path: path.resolve(__dirname, "hasumane-browse-effect.js"),
     },
   ],
+  [
+    faviconSvg,
+    {
+      contentType: "image/svg+xml",
+      path: path.resolve(clientDir, "favicon.svg"),
+    },
+  ],
+  [
+    faviconIco,
+    {
+      contentType: "image/svg+xml",
+      path: path.resolve(clientDir, "favicon.svg"),
+    },
+  ],
+  [
+    webManifest,
+    {
+      contentType: "application/manifest+json",
+      path: path.resolve(clientDir, "site.webmanifest"),
+    },
+  ],
 ]);
 const mediaExtensions = new Set([".mp4", ".webm", ".mov", ".m4v"]);
+const previewProducts = [
+  {
+    id: "preview-milk-01",
+    code: "MILK-01",
+    name: "Milk",
+    productType: "milk",
+    unit: "litre",
+    price: 60,
+    compareAtPrice: null,
+    taxPercent: 0,
+    defaultQuantity: 1,
+    defaultSchedule: "daily",
+    description: "Fresh farm milk delivered chilled and ready for daily use.",
+    tags: ["fresh", "daily", "milk"],
+    isActive: true,
+    active: true,
+    sortOrder: 0,
+  },
+  {
+    id: "preview-curd-02",
+    code: "CURD-02",
+    name: "Curd",
+    productType: "curd",
+    unit: "litre",
+    price: 35,
+    compareAtPrice: null,
+    taxPercent: 0,
+    defaultQuantity: 1,
+    defaultSchedule: "daily",
+    description: "Thick set curd made from our fresh milk batches.",
+    tags: ["curd", "fresh", "daily"],
+    isActive: true,
+    active: true,
+    sortOrder: 1,
+  },
+  {
+    id: "preview-butter-03",
+    code: "BUTTER-03",
+    name: "Butter",
+    productType: "butter",
+    unit: "gram",
+    price: 120,
+    compareAtPrice: 135,
+    taxPercent: 0,
+    defaultQuantity: 1,
+    defaultSchedule: "weekly",
+    description: "Small-batch churned butter with a rich traditional finish.",
+    tags: ["butter", "spread", "dairy"],
+    isActive: true,
+    active: true,
+    sortOrder: 2,
+  },
+  {
+    id: "preview-ghee-05",
+    code: "GHEE-05",
+    name: "Ghee",
+    productType: "ghee",
+    unit: "kg",
+    price: 260,
+    compareAtPrice: 285,
+    taxPercent: 0,
+    defaultQuantity: 1,
+    defaultSchedule: "monthly",
+    description: "Slow-cooked ghee with a clean aroma and rich color.",
+    tags: ["ghee", "traditional", "premium"],
+    isActive: true,
+    active: true,
+    sortOrder: 3,
+  },
+  {
+    id: "preview-paneer-04",
+    code: "PANEER-04",
+    name: "Paneer",
+    productType: "paneer",
+    unit: "gram",
+    price: 180,
+    compareAtPrice: 195,
+    taxPercent: 0,
+    defaultQuantity: 1,
+    defaultSchedule: "weekly",
+    description: "Soft fresh paneer for home cooking and everyday meals.",
+    tags: ["paneer", "protein", "fresh"],
+    isActive: true,
+    active: true,
+    sortOrder: 4,
+  },
+  {
+    id: "preview-cheese-06",
+    code: "CHEESE-06",
+    name: "Cheese",
+    productType: "cheese",
+    unit: "gram",
+    price: 220,
+    compareAtPrice: 245,
+    taxPercent: 0,
+    defaultQuantity: 1,
+    defaultSchedule: "weekly",
+    description: "Fresh mild cheese for cooking, slicing, and family meals.",
+    tags: ["cheese", "fresh", "dairy"],
+    isActive: true,
+    active: true,
+    sortOrder: 5,
+  },
+];
 
 console.log(`[Frontend Shim] Loading server entry: ${serverEntryPath}`);
 
@@ -146,13 +287,14 @@ function injectBrowseEffect(html) {
   );
   const optimizedHtml = cleanedHtml.replace(
     /<video\b(?=[^>]*\bclass=["'][^"']*\bhero-video\b)[^>]*>/gi,
-    (tag) => tag
-      .replace(/\s+preload=["']auto["']/i, ' preload="metadata"')
-      .replace(/\s+fetchpriority=["']high["']/i, ""),
+    optimizeHeroVideoTag,
   );
   const headTags = [];
   if (!optimizedHtml.includes('http-equiv="Cache-Control"')) {
     headTags.push(noCacheMetaTags);
+  }
+  if (!/<link\s+[^>]*rel=["'][^"']*\bicon\b/i.test(optimizedHtml)) {
+    headTags.push(brandHeadTags);
   }
   if (!optimizedHtml.includes(browseEffectCss)) {
     headTags.push(`<link rel="stylesheet" href="${browseEffectCss}">`);
@@ -168,13 +310,38 @@ function injectBrowseEffect(html) {
     ? optimizedHtml.replace("</head>", `${headTags.join("")}</head>`)
     : `${headTags.join("")}${optimizedHtml}`;
 
-  if (withCss.includes(browseEffectJs)) {
-    return withCss;
+  let withLoader = withCss;
+  if (!/<div\s+class=["']hasu-opening-loader\b/i.test(withLoader)) {
+    withLoader = /<body\b[^>]*>/i.test(withLoader)
+      ? withLoader.replace(/<body\b([^>]*)>/i, `<body$1>${openingLoaderMarkup}`)
+      : `${openingLoaderMarkup}${withLoader}`;
   }
 
-  return withCss.includes("</body>")
-    ? withCss.replace("</body>", `<script defer src="${browseEffectJs}"></script></body>`)
-    : `${withCss}<script defer src="${browseEffectJs}"></script>`;
+  if (withLoader.includes(browseEffectJs)) {
+    return withLoader;
+  }
+
+  return withLoader.includes("</body>")
+    ? withLoader.replace("</body>", `<script defer src="${browseEffectJs}"></script></body>`)
+    : `${withLoader}<script defer src="${browseEffectJs}"></script>`;
+}
+
+function optimizeHeroVideoTag(tag) {
+  let nextTag = tag.replace(/\s+poster=["'][^"']*["']/i, "");
+  if (/\s+preload=["'][^"']*["']/i.test(nextTag)) {
+    nextTag = nextTag.replace(/\s+preload=["'][^"']*["']/i, ' preload="auto"');
+  } else {
+    nextTag = nextTag.replace(/<video\b/i, '<video preload="auto"');
+  }
+  if (/\s+fetchpriority=["'][^"']*["']/i.test(nextTag)) {
+    nextTag = nextTag.replace(/\s+fetchpriority=["'][^"']*["']/i, ' fetchpriority="high"');
+  } else {
+    nextTag = nextTag.replace(/<video\b/i, '<video fetchpriority="high"');
+  }
+  if (!/\s+playsinline(?:=|\s|>)/i.test(nextTag)) {
+    nextTag = nextTag.replace(/<video\b/i, "<video playsinline");
+  }
+  return nextTag;
 }
 
 function getContentType(filePath) {
@@ -262,11 +429,86 @@ function serveStaticFile(req, res, filePath, contentType, cacheControl = "public
   fs.createReadStream(filePath).pipe(res);
 }
 
+function writeJsonResponse(req, res, statusCode, payload) {
+  const body = JSON.stringify(payload);
+  res.writeHead(statusCode, {
+    "Content-Type": "application/json; charset=utf-8",
+    "Cache-Control": "no-store",
+    "Content-Length": Buffer.byteLength(body),
+  });
+
+  if (req.method === "HEAD") {
+    res.end();
+    return;
+  }
+
+  res.end(body);
+}
+
+function readRequestJson(req) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    req.on("data", (chunk) => chunks.push(chunk));
+    req.on("end", () => {
+      if (chunks.length === 0) {
+        resolve({});
+        return;
+      }
+
+      try {
+        resolve(JSON.parse(Buffer.concat(chunks).toString("utf8")));
+      } catch (error) {
+        reject(error);
+      }
+    });
+    req.on("error", reject);
+  });
+}
+
 const server = http.createServer(async (req, res) => {
   try {
+    const requestUrl = new URL(req.url, `http://${req.headers.host}`);
+    const pathname = requestUrl.pathname;
+
+    if (
+      (req.method === "GET" || req.method === "HEAD") &&
+      (pathname === "/api/v1/products" || pathname === "/api/products")
+    ) {
+      writeJsonResponse(req, res, 200, {
+        success: true,
+        message: "Products fetched.",
+        data: previewProducts,
+        products: previewProducts,
+        meta: {
+          page: 1,
+          limit: previewProducts.length,
+          total: previewProducts.length,
+          totalPages: 1,
+        },
+      });
+      return;
+    }
+
+    if (
+      req.method === "POST" &&
+      (pathname === "/api/leads" || pathname === "/api/v1/leads" || pathname === "/api/v1/subscriptions/public")
+    ) {
+      const payload = await readRequestJson(req);
+      writeJsonResponse(req, res, 201, {
+        success: true,
+        message: "Thanks. We received your request. Our team will confirm the details on WhatsApp.",
+        lead: {
+          id: `preview-${randomUUID()}`,
+          ...payload,
+          status: "new",
+          submittedAt: new Date().toISOString(),
+        },
+      });
+      return;
+    }
+
     if (req.method === "GET" || req.method === "HEAD") {
       try {
-        const pathname = new URL(req.url, `http://${req.headers.host}`).pathname;
         const browseAsset = browseEffectAssets.get(pathname);
         if (browseAsset) {
           serveStaticFile(req, res, browseAsset.path, browseAsset.contentType, "no-cache");
